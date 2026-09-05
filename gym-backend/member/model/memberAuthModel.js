@@ -1,47 +1,46 @@
-const pool = require('../config/db');
+const pool = require('../../config/db');
 
-
-// ======================================
-// CREATE USER
-// ======================================
-
-const createUser = async ({
+const createMember = async ({
     name,
     email,
     password,
-    role,
     phone = null,
     fitness_goal = null
 }) => {
 
     const [result] = await pool.execute(
         `INSERT INTO users
-        (name, email, password, role, phone, fitness_goal)
-        VALUES (?, ?, ?, ?, ?, ?)`,
-        [
+        (
             name,
             email,
             password,
             role,
             phone,
-            fitness_goal
+            fitness_goal,
+            status
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+            name,
+            email,
+            password,
+            'MEMBER',
+            phone,
+            fitness_goal,
+            'ACTIVE'
         ]
     );
 
     return result.insertId;
 };
 
-
-// ======================================
-// FIND USER BY EMAIL
-// ======================================
-
-const findUserByEmail = async (email) => {
+const findMemberByEmail = async (email) => {
 
     const [rows] = await pool.execute(
         `SELECT *
          FROM users
          WHERE email = ?
+         AND role = 'MEMBER'
          LIMIT 1`,
         [email]
     );
@@ -49,12 +48,7 @@ const findUserByEmail = async (email) => {
     return rows[0] || null;
 };
 
-
-// ======================================
-// FIND USER BY ID
-// ======================================
-
-const findUserById = async (id) => {
+const findMemberById = async (id) => {
 
     const [rows] = await pool.execute(
         `SELECT
@@ -69,6 +63,7 @@ const findUserById = async (id) => {
             updated_at
          FROM users
          WHERE id = ?
+         AND role = 'MEMBER'
          LIMIT 1`,
         [id]
     );
@@ -76,9 +71,8 @@ const findUserById = async (id) => {
     return rows[0] || null;
 };
 
-
 module.exports = {
-    createUser,
-    findUserByEmail,
-    findUserById
+    createMember,
+    findMemberByEmail,
+    findMemberById
 };
