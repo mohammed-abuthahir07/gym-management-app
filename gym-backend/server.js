@@ -4,6 +4,7 @@ const cors = require('cors');
 const pool = require('./config/db');
 const memberAuthRoutes = require('./member/routes/memberAuthRoutes');
 const adminAuthRoutes = require('./admin/routes/adminAuthRoutes');
+const adminTrainerRoutes = require('./admin/routes/adminTrainerRoutes');
 const app = express();
 
 app.use(cors());
@@ -17,6 +18,7 @@ app.use('/api/member/auth', memberAuthRoutes);
 
 // ADMIN SIDE API
 app.use('/api/admin/auth', adminAuthRoutes);
+app.use('/api/admin/trainers', adminTrainerRoutes);
 
 const PORT = process.env.PORT || 5000;
 
