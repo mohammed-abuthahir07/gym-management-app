@@ -1,48 +1,30 @@
 const bcrypt = require('bcryptjs');
 const pool = require('../config/db');
 
-// =====================================
-// CREATE ADMIN ACCOUNT
-// ======================================
-
 const createAdmin = async () => {
     try {
-        // Admin account details
+
         const name = 'Gym Admin';
         const email = 'admin@gym.com';
         const phone = '9999999999';
         const password = 'Admin@123';
-
-        // ======================================
-        // CHECK IF ADMIN ALREADY EXISTS
-        // ======================================
-
+        // Check whether admin already exists
         const [existingAdmin] = await pool.execute(
             `SELECT id
              FROM users
              WHERE email = ?
+             AND role = 'ADMIN'
              LIMIT 1`,
             [email]
         );
-
         if (existingAdmin.length > 0) {
-
             console.log('Admin account already exists.');
-            process.exit(0);
+            return;
         }
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        // ======================================
-        // HASH PASSWORD
-        // ======================================
-
-        const hashedPassword = await bcrypt.hash(
-            password,
-            10
-        );
-
-        // ======================================
-        // INSERT ADMIN
-        // ======================================
+        // Create admin
         const [result] = await pool.execute(
             `INSERT INTO users
             (
@@ -80,6 +62,5 @@ const createAdmin = async () => {
         await pool.end();
     }
 };
-
 
 createAdmin();
