@@ -1,15 +1,6 @@
 const bcrypt = require('bcryptjs');
 
-const {
-    findTrainerByEmail,
-    createTrainer
-} = require('../model/adminTrainerModel');
-
-
-// ======================================
-// CREATE TRAINER
-// ADMIN ONLY
-// ======================================
+const { findTrainerByEmail, createTrainer} = require('../model/adminTrainerModel');
 
 const createTrainerAccount = async (req, res) => {
 
@@ -22,11 +13,6 @@ const createTrainerAccount = async (req, res) => {
             password
         } = req.body;
 
-
-        // ==============================
-        // REQUIRED FIELDS
-        // ==============================
-
         if (!name || !email || !password) {
 
             return res.status(400).json({
@@ -35,35 +21,15 @@ const createTrainerAccount = async (req, res) => {
             });
         }
 
-
-        // ==============================
-        // CHECK EXISTING EMAIL
-        // ==============================
-
         const existingUser = await findTrainerByEmail(email);
-
         if (existingUser) {
-
             return res.status(409).json({
                 success: false,
                 message: 'User with this email already exists'
             });
         }
 
-
-        // ==============================
-        // HASH PASSWORD
-        // ==============================
-
-        const hashedPassword = await bcrypt.hash(
-            password,
-            10
-        );
-
-
-        // ==============================
-        // CREATE TRAINER
-        // ==============================
+        const hashedPassword = await bcrypt.hash( password, 10);
 
         const trainerId = await createTrainer({
             name,
@@ -71,11 +37,6 @@ const createTrainerAccount = async (req, res) => {
             password: hashedPassword,
             phone
         });
-
-
-        // ==============================
-        // RESPONSE
-        // ==============================
 
         return res.status(201).json({
             success: true,
@@ -89,14 +50,12 @@ const createTrainerAccount = async (req, res) => {
                 status: 'ACTIVE'
             }
         });
-
     } catch (error) {
 
         console.error(
             'Create trainer error:',
             error
         );
-
         return res.status(500).json({
             success: false,
             message: 'Server error while creating trainer'

@@ -1,10 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
-const {
-    findTrainerByEmail,
-    findTrainerById
-} = require('../model/trainerAuthModel');
+const { findTrainerByEmail, findTrainerById} = require('../model/trainerAuthModel');
 
 const generateToken = (trainer) => {
     return jwt.sign(
@@ -26,8 +22,6 @@ const login = async (req, res) => {
             email,
             password
         } = req.body;
-
-        // Validate input
         if (!email || !password) {
             return res.status(400).json({
                 success: false,
@@ -35,9 +29,7 @@ const login = async (req, res) => {
             });
         }
 
-        // Find trainer
         const trainer = await findTrainerByEmail(email);
-
         if (!trainer) {
             return res.status(401).json({
                 success: false,
@@ -45,7 +37,6 @@ const login = async (req, res) => {
             });
         }
 
-        // Check account status
         if (trainer.status !== 'ACTIVE') {
             return res.status(403).json({
                 success: false,
@@ -53,12 +44,10 @@ const login = async (req, res) => {
             });
         }
 
-        // Compare password
         const passwordMatch = await bcrypt.compare(
             password,
             trainer.password
         );
-
         if (!passwordMatch) {
             return res.status(401).json({
                 success: false,
@@ -66,9 +55,7 @@ const login = async (req, res) => {
             });
         }
 
-        // Generate JWT
         const token = generateToken(trainer);
-
         return res.status(200).json({
             success: true,
             message: 'Trainer login successful',
@@ -82,13 +69,11 @@ const login = async (req, res) => {
                 status: trainer.status
             }
         });
-
     } catch (error) {
         console.error(
             'Trainer login error:',
             error
         );
-
         return res.status(500).json({
             success: false,
             message: 'Server error during trainer login'
@@ -96,22 +81,19 @@ const login = async (req, res) => {
     }
 };
 
+
 const getProfile = async (req, res) => {
     try {
-        // Trainer ID comes from JWT
         const trainerId = req.user.id;
-
         const trainer = await findTrainerById(
             trainerId
         );
-
         if (!trainer) {
             return res.status(404).json({
                 success: false,
                 message: 'Trainer not found'
             });
         }
-
         return res.status(200).json({
             success: true,
             message: 'Trainer profile fetched successfully',
@@ -132,7 +114,6 @@ const getProfile = async (req, res) => {
             'Trainer profile error:',
             error
         );
-
         return res.status(500).json({
             success: false,
             message: 'Server error while fetching trainer profile'

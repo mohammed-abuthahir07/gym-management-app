@@ -1,11 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
-const {
-    createMember,
-    findMemberByEmail,
-    findMemberById
-} = require('../model/memberAuthModel');
+const { createMember, findMemberByEmail, findMemberById} = require('../model/memberAuthModel');
 
 const generateToken = (member) => {
 
@@ -23,10 +18,6 @@ const generateToken = (member) => {
 };
 
 
-// ===============================
-// MEMBER REGISTER
-// ===============================
-
 const register = async (req, res) => {
 
     try {
@@ -39,7 +30,6 @@ const register = async (req, res) => {
             password
         } = req.body;
 
-
         // Required fields
         if (!name || !email || !password) {
 
@@ -48,8 +38,6 @@ const register = async (req, res) => {
                 message: 'Name, email and password are required'
             });
         }
-
-
         // Check existing member
         const existingMember = await findMemberByEmail(email);
 
@@ -60,8 +48,6 @@ const register = async (req, res) => {
                 message: 'Member with this email already exists'
             });
         }
-
-
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -74,8 +60,6 @@ const register = async (req, res) => {
             phone,
             fitness_goal
         });
-
-
         return res.status(201).json({
             success: true,
             message: 'Member registered successfully',
@@ -83,9 +67,7 @@ const register = async (req, res) => {
         });
 
     } catch (error) {
-
         console.error('Member registration error:', error);
-
         return res.status(500).json({
             success: false,
             message: 'Server error during member registration'
@@ -94,33 +76,20 @@ const register = async (req, res) => {
 };
 
 
-// ===============================
-// MEMBER LOGIN
-// ===============================
 
 const login = async (req, res) => {
 
     try {
+        const { email, password } = req.body;
 
-        const {
-            email,
-            password
-        } = req.body;
-
-
-        // Required fields
         if (!email || !password) {
-
             return res.status(400).json({
                 success: false,
                 message: 'Email and password are required'
             });
         }
 
-
-        // Find MEMBER only
         const member = await findMemberByEmail(email);
-
         if (!member) {
 
             return res.status(401).json({
@@ -129,8 +98,6 @@ const login = async (req, res) => {
             });
         }
 
-
-        // Check status
         if (member.status !== 'ACTIVE') {
 
             return res.status(403).json({
@@ -138,16 +105,12 @@ const login = async (req, res) => {
                 message: 'Member account is inactive'
             });
         }
-
-
-        // Compare password
         const passwordMatch = await bcrypt.compare(
             password,
             member.password
         );
 
         if (!passwordMatch) {
-
             return res.status(401).json({
                 success: false,
                 message: 'Invalid email or password'
@@ -157,7 +120,6 @@ const login = async (req, res) => {
 
         // Generate JWT
         const token = generateToken(member);
-
 
         return res.status(200).json({
             success: true,
@@ -185,10 +147,6 @@ const login = async (req, res) => {
     }
 };
 
-
-// ===============================
-// MEMBER PROFILE
-// ===============================
 
 const getProfile = async (req, res) => {
     try {
@@ -231,7 +189,6 @@ const getProfile = async (req, res) => {
         });
     }
 };
-
 
 module.exports = {
     register,

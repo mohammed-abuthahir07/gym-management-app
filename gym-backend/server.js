@@ -7,12 +7,9 @@ const adminAuthRoutes = require('./admin/routes/adminAuthRoutes');
 const adminTrainerRoutes = require('./admin/routes/adminTrainerRoutes');
 const trainerAuthRoutes = require('./trainer/routes/trainerAuthRoutes');
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-
 
 // MEMBER SIDE API
 app.use('/api/member/auth', memberAuthRoutes);
