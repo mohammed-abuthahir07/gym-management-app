@@ -13,7 +13,12 @@ const adminUserRoutes = require('./admin/routes/adminUserRoutes');
 const contactRoutes = require('./contact/routes/contactRoutes');
 const adminContactRoutes = require('./admin/routes/adminContactRoutes');
 const adminExerciseRoutes = require('./admin/routes/adminExerciseRoutes');
+const adminDashboardRoutes = require('./admin/routes/adminDashboardRoutes');
+
+
 const app = express();
+
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -36,6 +41,8 @@ app.use('/api/admin/challenges', adminChallengesRoutes);
 app.use('/api/admin', adminUserRoutes);
 app.use('/api/admin/exercises',adminExerciseRoutes);
 app.use('/api/admin/contacts', adminContactRoutes);
+app.use('/api/admin/dashboard', adminDashboardRoutes);
+app.use('/api/admin/dashboard', adminDashboardRoutes);
 
 const PORT = process.env.PORT || 5000;
 
