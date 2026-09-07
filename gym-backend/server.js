@@ -10,11 +10,16 @@ const adminPlanRoutes = require('./admin/routes/adminPlanRoutes');
 const adminPromotionRoutes = require('./admin/routes/adminPromotionRoutes');
 const adminChallengesRoutes = require('./admin/routes/adminChallengesRoutes');
 const adminUserRoutes = require('./admin/routes/adminUserRoutes');
+const contactRoutes = require('./contact/routes/contactRoutes');
+const adminContactRoutes = require('./admin/routes/adminContactRoutes');
 const adminExerciseRoutes = require('./admin/routes/adminExerciseRoutes');
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// PUBLIC SIDE API
+app.use('/api/contact', contactRoutes);
 
 // MEMBER SIDE API
 app.use('/api/member/auth', memberAuthRoutes);
@@ -30,6 +35,7 @@ app.use('/api/admin/promotions', adminPromotionRoutes);
 app.use('/api/admin/challenges', adminChallengesRoutes);
 app.use('/api/admin', adminUserRoutes);
 app.use('/api/admin/exercises',adminExerciseRoutes);
+app.use('/api/admin/contacts', adminContactRoutes);
 
 const PORT = process.env.PORT || 5000;
 
