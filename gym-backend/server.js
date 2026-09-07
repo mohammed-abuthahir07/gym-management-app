@@ -8,6 +8,7 @@ const adminTrainerRoutes = require('./admin/routes/adminTrainerRoutes');
 const trainerAuthRoutes = require('./trainer/routes/trainerAuthRoutes');
 const adminPlanRoutes = require('./admin/routes/adminPlanRoutes');
 const adminPromotionRoutes = require('./admin/routes/adminPromotionRoutes');
+const adminChallengesRoutes = require('./admin/routes/adminChallengesRoutes');
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -24,6 +25,7 @@ app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/admin/trainers', adminTrainerRoutes);
 app.use('/api/admin/plans', adminPlanRoutes);
 app.use('/api/admin/promotions', adminPromotionRoutes);
+app.use('/api/admin/challenges', adminChallengesRoutes);
 
 const PORT = process.env.PORT || 5000;
 
