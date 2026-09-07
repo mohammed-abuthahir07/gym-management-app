@@ -1,36 +1,121 @@
 const express = require('express');
 
 const router = express.Router();
-const { getMembers, getMember, deleteMember, getTrainers, getTrainer, deleteTrainer} = require('../controller/adminUserController');
-const authMiddleware = require('../../middleware/authMiddleware');
-const roleMiddleware = require('../../middleware/roleMiddleware');
+
+const authMiddleware =
+    require('../../middleware/authMiddleware');
+
+const roleMiddleware =
+    require('../../middleware/roleMiddleware');
+
+const {
+    getMembers,
+    getMember,
+    deleteMember,
+
+    getTrainers,
+    getTrainer,
+    deleteTrainer,
+
+    assignTrainer,
+    removeTrainer
+
+} = require('../controller/adminUserController');
 
 
-// ======================================
-// MEMBERS
-// ======================================
+// =====================================================
+// MEMBER ROUTES
+// =====================================================
+
 
 // GET ALL MEMBERS
-router.get('/members', authMiddleware, roleMiddleware('ADMIN'), getMembers);
+// GET /api/admin/members
+router.get(
+    '/members',
+    authMiddleware,
+    roleMiddleware('ADMIN'),
+    getMembers
+);
+
 
 // GET SINGLE MEMBER
-router.get( '/members/:id', authMiddleware, roleMiddleware('ADMIN'), getMember);
+// GET /api/admin/members/:id
+router.get(
+    '/members/:id',
+    authMiddleware,
+    roleMiddleware('ADMIN'),
+    getMember
+);
+
 
 // DELETE / DEACTIVATE MEMBER
-router.delete('/members/:id', authMiddleware, roleMiddleware('ADMIN'), deleteMember);
+// DELETE /api/admin/members/:id
+router.delete(
+    '/members/:id',
+    authMiddleware,
+    roleMiddleware('ADMIN'),
+    deleteMember
+);
 
 
-// ======================================
-// TRAINERS
-// ======================================
+// =====================================================
+// TRAINER ROUTES
+// =====================================================
+
 
 // GET ALL TRAINERS
-router.get('/trainers', authMiddleware, roleMiddleware('ADMIN'), getTrainers);
+// GET /api/admin/trainers
+router.get(
+    '/trainers',
+    authMiddleware,
+    roleMiddleware('ADMIN'),
+    getTrainers
+);
+
 
 // GET SINGLE TRAINER
-router.get( '/trainers/:id', authMiddleware,roleMiddleware('ADMIN'),getTrainer);
+// GET /api/admin/trainers/:id
+router.get(
+    '/trainers/:id',
+    authMiddleware,
+    roleMiddleware('ADMIN'),
+    getTrainer
+);
+
 
 // DELETE / DEACTIVATE TRAINER
-router.delete('/trainers/:id',authMiddleware,roleMiddleware('ADMIN'), deleteTrainer);
+// DELETE /api/admin/trainers/:id
+router.delete(
+    '/trainers/:id',
+    authMiddleware,
+    roleMiddleware('ADMIN'),
+    deleteTrainer
+);
+
+
+// =====================================================
+// MEMBER ↔ TRAINER ASSIGNMENT
+// =====================================================
+
+
+// ASSIGN TRAINER
+// PUT /api/admin/members/:id/trainer
+router.put(
+    '/members/:id/trainer',
+    authMiddleware,
+    roleMiddleware('ADMIN'),
+    assignTrainer
+);
+
+
+// REMOVE TRAINER
+// DELETE /api/admin/members/:id/trainer
+router.delete(
+    '/members/:id/trainer',
+    authMiddleware,
+    roleMiddleware('ADMIN'),
+    removeTrainer
+);
+
 
 module.exports = router;

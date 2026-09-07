@@ -5,14 +5,19 @@ const {
 
     getAllTrainers,
     findTrainerById,
-    deactivateTrainer
+    deactivateTrainer,
+
+    assignTrainerToMember,
+    removeTrainerFromMember
+
 } = require('../model/adminUserModel');
 
 
-// ======================================
+// =====================================================
 // GET ALL MEMBERS
-// ======================================
+// =====================================================
 const getMembers = async (req, res) => {
+
     try {
 
         const members = await getAllMembers();
@@ -38,18 +43,19 @@ const getMembers = async (req, res) => {
 };
 
 
-// ======================================
+// =====================================================
 // GET SINGLE MEMBER
-// ======================================
+// =====================================================
 const getMember = async (req, res) => {
+
     try {
 
         const { id } = req.params;
 
-        const member =
-            await findMemberById(id);
+        const member = await findMemberById(id);
 
         if (!member) {
+
             return res.status(404).json({
                 success: false,
                 message: 'Member not found'
@@ -77,10 +83,11 @@ const getMember = async (req, res) => {
 };
 
 
-// ======================================
+// =====================================================
 // DELETE / DEACTIVATE MEMBER
-// ======================================
+// =====================================================
 const deleteMember = async (req, res) => {
+
     try {
 
         const { id } = req.params;
@@ -89,6 +96,7 @@ const deleteMember = async (req, res) => {
             await findMemberById(id);
 
         if (!existingMember) {
+
             return res.status(404).json({
                 success: false,
                 message: 'Member not found'
@@ -96,6 +104,7 @@ const deleteMember = async (req, res) => {
         }
 
         if (existingMember.status === 'INACTIVE') {
+
             return res.status(400).json({
                 success: false,
                 message: 'Member is already inactive'
@@ -128,10 +137,11 @@ const deleteMember = async (req, res) => {
 };
 
 
-// ======================================
+// =====================================================
 // GET ALL TRAINERS
-// ======================================
+// =====================================================
 const getTrainers = async (req, res) => {
+
     try {
 
         const trainers =
@@ -158,10 +168,11 @@ const getTrainers = async (req, res) => {
 };
 
 
-// ======================================
+// =====================================================
 // GET SINGLE TRAINER
-// ======================================
+// =====================================================
 const getTrainer = async (req, res) => {
+
     try {
 
         const { id } = req.params;
@@ -170,6 +181,7 @@ const getTrainer = async (req, res) => {
             await findTrainerById(id);
 
         if (!trainer) {
+
             return res.status(404).json({
                 success: false,
                 message: 'Trainer not found'
@@ -197,10 +209,11 @@ const getTrainer = async (req, res) => {
 };
 
 
-// ======================================
+// =====================================================
 // DELETE / DEACTIVATE TRAINER
-// ======================================
+// =====================================================
 const deleteTrainer = async (req, res) => {
+
     try {
 
         const { id } = req.params;
@@ -209,6 +222,7 @@ const deleteTrainer = async (req, res) => {
             await findTrainerById(id);
 
         if (!existingTrainer) {
+
             return res.status(404).json({
                 success: false,
                 message: 'Trainer not found'
@@ -216,6 +230,7 @@ const deleteTrainer = async (req, res) => {
         }
 
         if (existingTrainer.status === 'INACTIVE') {
+
             return res.status(400).json({
                 success: false,
                 message: 'Trainer is already inactive'
@@ -248,11 +263,195 @@ const deleteTrainer = async (req, res) => {
 };
 
 
+// =====================================================
+// ASSIGN TRAINER TO MEMBER
+// =====================================================
+const assignTrainer = async (req, res) => {
+
+    try {
+
+        const { id } = req.params;
+        const { trainer_id } = req.body;
+
+
+        // ---------------------------------------------
+        // Validate trainer_id
+        // ---------------------------------------------
+        if (!trainer_id) {
+
+            return res.status(400).json({
+                success: false,
+                message: 'Trainer ID is required'
+            });
+        }
+
+
+        // ---------------------------------------------
+        // Check member
+        // ---------------------------------------------
+        const member =
+            await findMemberById(id);
+
+        if (!member) {
+
+            return res.status(404).json({
+                success: false,
+                message: 'Member not found'
+            });
+        }
+
+
+        // ---------------------------------------------
+        // Check member status
+        // ---------------------------------------------
+        if (member.status === 'INACTIVE') {
+
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot assign trainer to inactive member'
+            });
+        }
+
+
+        // ---------------------------------------------
+        // Check trainer
+        // ---------------------------------------------
+        const trainer =
+            await findTrainerById(trainer_id);
+
+        if (!trainer) {
+
+            return res.status(404).json({
+                success: false,
+                message: 'Trainer not found'
+            });
+        }
+
+
+        // ---------------------------------------------
+        // Trainer must be ACTIVE
+        // ---------------------------------------------
+        if (trainer.status !== 'ACTIVE') {
+
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot assign an inactive trainer'
+            });
+        }
+
+
+        // ---------------------------------------------
+        // Assign trainer
+        // ---------------------------------------------
+        await assignTrainerToMember(
+            id,
+            trainer_id
+        );
+
+
+        // ---------------------------------------------
+        // Get updated member
+        // ---------------------------------------------
+        const updatedMember =
+            await findMemberById(id);
+
+
+        return res.status(200).json({
+            success: true,
+            message: 'Trainer assigned successfully',
+            member: updatedMember
+        });
+
+    } catch (error) {
+
+        console.error(
+            'Assign trainer error:',
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: 'Server error while assigning trainer'
+        });
+    }
+};
+
+
+// =====================================================
+// REMOVE TRAINER FROM MEMBER
+// =====================================================
+const removeTrainer = async (req, res) => {
+
+    try {
+
+        const { id } = req.params;
+
+
+        // ---------------------------------------------
+        // Check member
+        // ---------------------------------------------
+        const member =
+            await findMemberById(id);
+
+        if (!member) {
+
+            return res.status(404).json({
+                success: false,
+                message: 'Member not found'
+            });
+        }
+
+
+        // ---------------------------------------------
+        // Remove trainer
+        // ---------------------------------------------
+        await removeTrainerFromMember(id);
+
+
+        // ---------------------------------------------
+        // Get updated member
+        // ---------------------------------------------
+        const updatedMember =
+            await findMemberById(id);
+
+
+        return res.status(200).json({
+            success: true,
+            message: 'Trainer removed successfully',
+            member: updatedMember
+        });
+
+    } catch (error) {
+
+        console.error(
+            'Remove trainer error:',
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: 'Server error while removing trainer'
+        });
+    }
+};
+
+
+// =====================================================
+// EXPORT
+// =====================================================
 module.exports = {
+
+    // Members
     getMembers,
     getMember,
     deleteMember,
+
+    // Trainers
     getTrainers,
     getTrainer,
-    deleteTrainer
+    deleteTrainer,
+
+    // Trainer Assignment
+    assignTrainer,
+    removeTrainer
 };
