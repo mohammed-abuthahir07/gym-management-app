@@ -20,4 +20,5 @@ router.put('/:id', authMiddleware, roleMiddleware('ADMIN'), updateAdminPromotion
 // DELETE PROMOTION
 router.delete('/:id',authMiddleware,roleMiddleware('ADMIN'),deleteAdminPromotion);
 
+
 module.exports = router;
