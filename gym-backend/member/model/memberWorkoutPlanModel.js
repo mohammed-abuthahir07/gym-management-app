@@ -149,7 +149,60 @@ const getMemberWorkoutPlanById = async (planId, memberId) => {
 };
 
 
+const markWorkoutExerciseCompleted = async (
+    memberId,
+    workoutPlanExerciseId
+) => {
+    const [result] = await pool.execute(
+        `
+        INSERT INTO workout_completions
+        (
+            member_id,
+            workout_plan_exercise_id,
+            completed_date
+        )
+        VALUES (?, ?, CURDATE())
+        `,
+        [
+            memberId,
+            workoutPlanExerciseId
+        ]
+    );
+
+    return result.insertId;
+};
+
+const getWorkoutCompletionById = async (
+    memberId,
+    workoutPlanExerciseId
+) => {
+    const [rows] = await pool.execute(
+        `
+        SELECT
+            wc.id,
+            wc.member_id,
+            wc.workout_plan_exercise_id,
+            wc.completed_date,
+            wc.completed_at
+        FROM workout_completions wc
+        WHERE wc.member_id = ?
+          AND wc.workout_plan_exercise_id = ?
+          AND wc.completed_date = CURDATE()
+        LIMIT 1
+        `,
+        [
+            memberId,
+            workoutPlanExerciseId
+        ]
+    );
+
+    return rows.length > 0 ? rows[0] : null;
+};
+
+
 module.exports = {
     getMemberWorkoutPlans,
-    getMemberWorkoutPlanById
+    getMemberWorkoutPlanById,
+    markWorkoutExerciseCompleted,
+    getWorkoutCompletionById
 };

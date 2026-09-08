@@ -7,7 +7,8 @@ const roleMiddleware = require('../../middleware/roleMiddleware');
 
 const {
     getWorkoutPlans,
-    getWorkoutPlan
+    getWorkoutPlan,
+    markWorkoutDone
 } = require('../controller/memberWorkoutPlanController');
 
 
@@ -30,6 +31,14 @@ router.get(
     authMiddleware,
     roleMiddleware('MEMBER'),
     getWorkoutPlan
+);
+
+
+router.post(
+    '/workout-plans/:planId/exercises/:workoutExerciseId/complete',
+    authMiddleware,
+    roleMiddleware('MEMBER'),
+    markWorkoutDone
 );
 
 
