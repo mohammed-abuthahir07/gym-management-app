@@ -11,15 +11,15 @@ const {
     getWorkoutPlansDashboard,
     getNotificationDashboard,
     getPreviousMonthProgressDashboard,
-    getTodayWorkoutDashboard
+    getTodayWorkoutDashboard,
+    getCurrentMonthCheatCountDashboard
 } = require('../controller/memberDashboardController');
 
 
-/*
- * Get total workout check-in days
- *
- * GET /api/member/dashboard/checkin-days
- */
+// ============================================================
+// GET TOTAL WORKOUT CHECK-IN DAYS
+// ============================================================
+
 router.get(
     '/dashboard/checkin-days',
     authMiddleware,
@@ -28,16 +28,22 @@ router.get(
 );
 
 
-/*
- * Get today's diet
- *
- * GET /api/member/dashboard/diet-plan
- *
- * Automatically returns:
- * Monday    -> Monday diet
- * Tuesday   -> Tuesday diet
- * etc.
- */
+// ============================================================
+// GET CURRENT MONTH CHEAT COUNT
+// ============================================================
+
+router.get(
+    '/dashboard/cheat-count',
+    authMiddleware,
+    roleMiddleware('MEMBER'),
+    getCurrentMonthCheatCountDashboard
+);
+
+
+// ============================================================
+// GET TODAY'S DIET
+// ============================================================
+
 router.get(
     '/dashboard/diet-plan',
     authMiddleware,
@@ -46,11 +52,10 @@ router.get(
 );
 
 
-/*
- * Get total workout plans
- *
- * GET /api/member/dashboard/workout-plans
- */
+// ============================================================
+// GET TOTAL WORKOUT PLANS
+// ============================================================
+
 router.get(
     '/dashboard/workout-plans',
     authMiddleware,
@@ -59,11 +64,10 @@ router.get(
 );
 
 
-/*
- * Get unread notification count
- *
- * GET /api/member/dashboard/notifications
- */
+// ============================================================
+// GET UNREAD NOTIFICATION COUNT
+// ============================================================
+
 router.get(
     '/dashboard/notifications',
     authMiddleware,
@@ -72,11 +76,10 @@ router.get(
 );
 
 
-/*
- * Get previous month's latest progress
- *
- * GET /api/member/dashboard/previous-month-progress
- */
+// ============================================================
+// GET PREVIOUS MONTH'S LATEST PROGRESS
+// ============================================================
+
 router.get(
     '/dashboard/previous-month-progress',
     authMiddleware,
@@ -85,16 +88,10 @@ router.get(
 );
 
 
-/*
- * Get today's workout
- *
- * GET /api/member/dashboard/today-workout
- *
- * Automatically returns:
- * Monday    -> Monday workout
- * Tuesday   -> Tuesday workout
- * etc.
- */
+// ============================================================
+// GET TODAY'S WORKOUT
+// ============================================================
+
 router.get(
     '/dashboard/today-workout',
     authMiddleware,

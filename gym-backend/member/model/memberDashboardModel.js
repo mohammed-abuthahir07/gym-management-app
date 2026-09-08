@@ -1,10 +1,10 @@
 const pool = require('../../config/db');
 
 
-/*
- * Get total workout check-in days
- * for the logged-in member.
- */
+// ============================================================
+// GET TOTAL WORKOUT CHECK-IN DAYS
+// ============================================================
+
 const getCheckInDays = async (memberId) => {
     const [rows] = await pool.execute(
         `
@@ -19,17 +19,10 @@ const getCheckInDays = async (memberId) => {
 };
 
 
-/*
- * Get today's diet plan
- *
- * The current day is automatically detected
- * from the database server date.
- *
- * Example:
- * Monday    -> Monday meals
- * Tuesday   -> Tuesday meals
- * Wednesday -> Wednesday meals
- */
+// ============================================================
+// GET TODAY'S DIET PLAN
+// ============================================================
+
 const getTodayDietPlan = async (memberId) => {
     const [rows] = await pool.execute(
         `
@@ -83,10 +76,10 @@ const getTodayDietPlan = async (memberId) => {
 };
 
 
-/*
- * Get total workout plans
- * assigned to the logged-in member.
- */
+// ============================================================
+// GET TOTAL WORKOUT PLANS
+// ============================================================
+
 const getWorkoutPlansCount = async (memberId) => {
     const [rows] = await pool.execute(
         `
@@ -101,10 +94,10 @@ const getWorkoutPlansCount = async (memberId) => {
 };
 
 
-/*
- * Get unread notification count
- * for the logged-in member.
- */
+// ============================================================
+// GET UNREAD NOTIFICATION COUNT
+// ============================================================
+
 const getNotificationCount = async (memberId) => {
     const [rows] = await pool.execute(
         `
@@ -121,14 +114,10 @@ const getNotificationCount = async (memberId) => {
 };
 
 
-/*
- * Get the latest progress record
- * from the previous calendar month.
- *
- * Example:
- * Current month = September
- * Result = latest progress from August
- */
+// ============================================================
+// GET PREVIOUS MONTH'S LATEST PROGRESS
+// ============================================================
+
 const getPreviousMonthProgress = async (memberId) => {
     const [rows] = await pool.execute(
         `
@@ -169,17 +158,10 @@ const getPreviousMonthProgress = async (memberId) => {
 };
 
 
-/*
- * Get today's workout plans
- *
- * Monday    -> MONDAY workout
- * Tuesday   -> TUESDAY workout
- * Wednesday -> WEDNESDAY workout
- * etc.
- *
- * Only workouts belonging to the
- * logged-in member are returned.
- */
+// ============================================================
+// GET TODAY'S WORKOUT PLANS
+// ============================================================
+
 const getTodayWorkoutPlans = async (memberId) => {
     const [rows] = await pool.execute(
         `
@@ -237,11 +219,42 @@ const getTodayWorkoutPlans = async (memberId) => {
 };
 
 
+// ============================================================
+// GET CURRENT MONTH CHEAT COUNT
+// ============================================================
+
+const getCurrentMonthCheatCount = async (memberId) => {
+    const [rows] = await pool.execute(
+        `
+        SELECT COUNT(*) AS total
+        FROM cheat_days
+        WHERE member_id = ?
+          AND cheat_date >= DATE_FORMAT(
+              CURDATE(),
+              '%Y-%m-01'
+          )
+          AND cheat_date < DATE_FORMAT(
+              DATE_ADD(CURDATE(), INTERVAL 1 MONTH),
+              '%Y-%m-01'
+          )
+        `,
+        [memberId]
+    );
+
+    return rows[0].total;
+};
+
+
+// ============================================================
+// EXPORT ALL FUNCTIONS
+// ============================================================
+
 module.exports = {
     getCheckInDays,
     getTodayDietPlan,
     getWorkoutPlansCount,
     getNotificationCount,
     getPreviousMonthProgress,
-    getTodayWorkoutPlans
+    getTodayWorkoutPlans,
+    getCurrentMonthCheatCount
 };

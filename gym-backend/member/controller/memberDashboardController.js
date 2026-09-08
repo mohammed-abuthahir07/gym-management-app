@@ -4,15 +4,15 @@ const {
     getWorkoutPlansCount,
     getNotificationCount,
     getPreviousMonthProgress,
-    getTodayWorkoutPlans
+    getTodayWorkoutPlans,
+    getCurrentMonthCheatCount
 } = require('../model/memberDashboardModel');
 
 
-/*
- * GET check-in days
- *
- * GET /api/member/dashboard/checkin-days
- */
+// ============================================================
+// GET CHECK-IN DAYS
+// ============================================================
+
 const getCheckInDaysDashboard = async (req, res) => {
     try {
 
@@ -21,6 +21,7 @@ const getCheckInDaysDashboard = async (req, res) => {
         const total = await getCheckInDays(memberId);
 
         return res.status(200).json({
+            success: true,
             total
         });
 
@@ -32,29 +33,17 @@ const getCheckInDaysDashboard = async (req, res) => {
         );
 
         return res.status(500).json({
+            success: false,
             message: 'Failed to get check-in days'
         });
     }
 };
 
 
-/*
- * GET today's diet plan
- *
- * GET /api/member/dashboard/diet-plan
- *
- * Example:
- *
- * Monday:
- *   Breakfast
- *   Lunch
- *   Dinner
- *
- * Tuesday:
- *   Breakfast
- *   Lunch
- *   Dinner
- */
+// ============================================================
+// GET TODAY'S DIET PLAN
+// ============================================================
+
 const getDietPlanDashboard = async (req, res) => {
     try {
 
@@ -62,18 +51,14 @@ const getDietPlanDashboard = async (req, res) => {
 
         const dietPlans = await getTodayDietPlan(memberId);
 
-        /*
-         * Get current weekday for response.
-         *
-         * This is only for displaying the day.
-         * The actual filtering is done by MySQL.
-         */
-        const today = new Date().toLocaleDateString(
-            'en-US',
-            {
-                weekday: 'long'
-            }
-        ).toUpperCase();
+        const today = new Date()
+            .toLocaleDateString(
+                'en-US',
+                {
+                    weekday: 'long'
+                }
+            )
+            .toUpperCase();
 
         return res.status(200).json({
             success: true,
@@ -97,11 +82,10 @@ const getDietPlanDashboard = async (req, res) => {
 };
 
 
-/*
- * GET workout plan count
- *
- * GET /api/member/dashboard/workout-plans
- */
+// ============================================================
+// GET WORKOUT PLAN COUNT
+// ============================================================
+
 const getWorkoutPlansDashboard = async (req, res) => {
     try {
 
@@ -110,6 +94,7 @@ const getWorkoutPlansDashboard = async (req, res) => {
         const total = await getWorkoutPlansCount(memberId);
 
         return res.status(200).json({
+            success: true,
             total
         });
 
@@ -121,17 +106,17 @@ const getWorkoutPlansDashboard = async (req, res) => {
         );
 
         return res.status(500).json({
+            success: false,
             message: 'Failed to get workout plans count'
         });
     }
 };
 
 
-/*
- * GET unread notification count
- *
- * GET /api/member/dashboard/notifications
- */
+// ============================================================
+// GET UNREAD NOTIFICATION COUNT
+// ============================================================
+
 const getNotificationDashboard = async (req, res) => {
     try {
 
@@ -140,6 +125,7 @@ const getNotificationDashboard = async (req, res) => {
         const total = await getNotificationCount(memberId);
 
         return res.status(200).json({
+            success: true,
             total
         });
 
@@ -151,17 +137,17 @@ const getNotificationDashboard = async (req, res) => {
         );
 
         return res.status(500).json({
+            success: false,
             message: 'Failed to get notification count'
         });
     }
 };
 
 
-/*
- * GET previous month's latest progress
- *
- * GET /api/member/dashboard/previous-month-progress
- */
+// ============================================================
+// GET PREVIOUS MONTH'S LATEST PROGRESS
+// ============================================================
+
 const getPreviousMonthProgressDashboard = async (req, res) => {
     try {
 
@@ -172,6 +158,7 @@ const getPreviousMonthProgressDashboard = async (req, res) => {
         );
 
         return res.status(200).json({
+            success: true,
             progress
         });
 
@@ -183,22 +170,17 @@ const getPreviousMonthProgressDashboard = async (req, res) => {
         );
 
         return res.status(500).json({
+            success: false,
             message: 'Failed to get previous month progress'
         });
     }
 };
 
 
-/*
- * GET today's workout
- *
- * GET /api/member/dashboard/today-workout
- *
- * Monday    -> Monday workouts
- * Tuesday   -> Tuesday workouts
- * Wednesday -> Wednesday workouts
- * etc.
- */
+// ============================================================
+// GET TODAY'S WORKOUT
+// ============================================================
+
 const getTodayWorkoutDashboard = async (req, res) => {
     try {
 
@@ -208,16 +190,14 @@ const getTodayWorkoutDashboard = async (req, res) => {
             memberId
         );
 
-        /*
-         * Used only for displaying today's day
-         * in the API response.
-         */
-        const today = new Date().toLocaleDateString(
-            'en-US',
-            {
-                weekday: 'long'
-            }
-        ).toUpperCase();
+        const today = new Date()
+            .toLocaleDateString(
+                'en-US',
+                {
+                    weekday: 'long'
+                }
+            )
+            .toUpperCase();
 
         return res.status(200).json({
             success: true,
@@ -241,11 +221,49 @@ const getTodayWorkoutDashboard = async (req, res) => {
 };
 
 
+// ============================================================
+// GET CURRENT MONTH CHEAT COUNT
+// ============================================================
+
+const getCurrentMonthCheatCountDashboard = async (req, res) => {
+    try {
+
+        const memberId = req.user.id;
+
+        const total = await getCurrentMonthCheatCount(
+            memberId
+        );
+
+        return res.status(200).json({
+            success: true,
+            total
+        });
+
+    } catch (error) {
+
+        console.error(
+            'Get current month cheat count error:',
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to get current month cheat count'
+        });
+    }
+};
+
+
+// ============================================================
+// EXPORT CONTROLLERS
+// ============================================================
+
 module.exports = {
     getCheckInDaysDashboard,
     getDietPlanDashboard,
     getWorkoutPlansDashboard,
     getNotificationDashboard,
     getPreviousMonthProgressDashboard,
-    getTodayWorkoutDashboard
+    getTodayWorkoutDashboard,
+    getCurrentMonthCheatCountDashboard
 };
