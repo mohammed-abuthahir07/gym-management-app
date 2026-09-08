@@ -31,6 +31,7 @@ const trainerDietPlanRoutes = require('./trainer/routes/trainerDietPlanRoutes');
 const memberDietPlanRoutes = require('./member/routes/memberDietPlanRoutes');
 const trainerMessageRoutes = require('./trainer/routes/trainerMessageRoutes');
 const memberMessageRoutes = require('./member/routes/memberMessageRoutes');
+const trainerDashboardRoutes = require('./trainer/routes/trainerDashboardRoutes');
 
 const app = express();
 
@@ -62,6 +63,8 @@ app.use('/api/trainer',trainerClassScheduleRoutes);
 app.use('/api/trainer', trainerWorkoutPlanRoutes);
 app.use('/api/trainer', trainerDietPlanRoutes);
 app.use('/api/trainer', trainerMessageRoutes);
+app.use('/api/trainer', trainerDashboardRoutes);
+
 
 // ADMIN SIDE API
 app.use('/api/admin/auth', adminAuthRoutes);
