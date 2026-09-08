@@ -1,11 +1,12 @@
 const {
     getCheckInDays,
-    getCurrentDietPlan,
+    getTodayDietPlan,
     getWorkoutPlansCount,
     getNotificationCount,
     getPreviousMonthProgress,
     getTodayWorkoutPlans
 } = require('../model/memberDashboardModel');
+
 
 /*
  * GET check-in days
@@ -14,6 +15,7 @@ const {
  */
 const getCheckInDaysDashboard = async (req, res) => {
     try {
+
         const memberId = req.user.id;
 
         const total = await getCheckInDays(memberId);
@@ -23,6 +25,7 @@ const getCheckInDaysDashboard = async (req, res) => {
         });
 
     } catch (error) {
+
         console.error(
             'Get member check-in days error:',
             error
@@ -36,28 +39,59 @@ const getCheckInDaysDashboard = async (req, res) => {
 
 
 /*
- * GET current diet plan
+ * GET today's diet plan
  *
  * GET /api/member/dashboard/diet-plan
+ *
+ * Example:
+ *
+ * Monday:
+ *   Breakfast
+ *   Lunch
+ *   Dinner
+ *
+ * Tuesday:
+ *   Breakfast
+ *   Lunch
+ *   Dinner
  */
 const getDietPlanDashboard = async (req, res) => {
     try {
+
         const memberId = req.user.id;
 
-        const dietPlan = await getCurrentDietPlan(memberId);
+        const dietPlans = await getTodayDietPlan(memberId);
+
+        /*
+         * Get current weekday for response.
+         *
+         * This is only for displaying the day.
+         * The actual filtering is done by MySQL.
+         */
+        const today = new Date().toLocaleDateString(
+            'en-US',
+            {
+                weekday: 'long'
+            }
+        ).toUpperCase();
 
         return res.status(200).json({
-            diet_plan: dietPlan
+            success: true,
+            day: today,
+            count: dietPlans.length,
+            diet_plans: dietPlans
         });
 
     } catch (error) {
+
         console.error(
-            'Get member current diet plan error:',
+            'Get member today diet plan error:',
             error
         );
 
         return res.status(500).json({
-            message: 'Failed to get current diet plan'
+            success: false,
+            message: 'Failed to get today diet plan'
         });
     }
 };
@@ -70,6 +104,7 @@ const getDietPlanDashboard = async (req, res) => {
  */
 const getWorkoutPlansDashboard = async (req, res) => {
     try {
+
         const memberId = req.user.id;
 
         const total = await getWorkoutPlansCount(memberId);
@@ -79,6 +114,7 @@ const getWorkoutPlansDashboard = async (req, res) => {
         });
 
     } catch (error) {
+
         console.error(
             'Get member workout plans count error:',
             error
@@ -98,6 +134,7 @@ const getWorkoutPlansDashboard = async (req, res) => {
  */
 const getNotificationDashboard = async (req, res) => {
     try {
+
         const memberId = req.user.id;
 
         const total = await getNotificationCount(memberId);
@@ -107,6 +144,7 @@ const getNotificationDashboard = async (req, res) => {
         });
 
     } catch (error) {
+
         console.error(
             'Get member notification count error:',
             error
@@ -118,8 +156,15 @@ const getNotificationDashboard = async (req, res) => {
     }
 };
 
+
+/*
+ * GET previous month's latest progress
+ *
+ * GET /api/member/dashboard/previous-month-progress
+ */
 const getPreviousMonthProgressDashboard = async (req, res) => {
     try {
+
         const memberId = req.user.id;
 
         const progress = await getPreviousMonthProgress(
@@ -131,6 +176,7 @@ const getPreviousMonthProgressDashboard = async (req, res) => {
         });
 
     } catch (error) {
+
         console.error(
             'Get previous month progress error:',
             error
@@ -142,17 +188,38 @@ const getPreviousMonthProgressDashboard = async (req, res) => {
     }
 };
 
+
+/*
+ * GET today's workout
+ *
+ * GET /api/member/dashboard/today-workout
+ *
+ * Monday    -> Monday workouts
+ * Tuesday   -> Tuesday workouts
+ * Wednesday -> Wednesday workouts
+ * etc.
+ */
 const getTodayWorkoutDashboard = async (req, res) => {
     try {
+
         const memberId = req.user.id;
 
-        const workouts = await getTodayWorkoutPlans(memberId);
+        const workouts = await getTodayWorkoutPlans(
+            memberId
+        );
 
-        const today = new Date().toLocaleDateString('en-US', {
-            weekday: 'long'
-        }).toUpperCase();
+        /*
+         * Used only for displaying today's day
+         * in the API response.
+         */
+        const today = new Date().toLocaleDateString(
+            'en-US',
+            {
+                weekday: 'long'
+            }
+        ).toUpperCase();
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             day: today,
             count: workouts.length,
@@ -160,9 +227,13 @@ const getTodayWorkoutDashboard = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Get today workout dashboard error:', error);
 
-        res.status(500).json({
+        console.error(
+            'Get today workout dashboard error:',
+            error
+        );
+
+        return res.status(500).json({
             success: false,
             message: 'Failed to fetch today workout plans'
         });

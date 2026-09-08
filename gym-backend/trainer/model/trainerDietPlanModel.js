@@ -1,38 +1,35 @@
 const pool = require('../../config/db');
 
 
-// Check whether member is assigned to this trainer
+// Check whether member is assigned to trainer
 const checkMemberAssignedToTrainer = async (memberId, trainerId) => {
     const [rows] = await pool.execute(
         `
-        SELECT
-            id,
-            name,
-            email,
-            status,
-            trainer_id
+        SELECT id
         FROM users
         WHERE id = ?
           AND trainer_id = ?
           AND role = 'MEMBER'
+          AND status = 'ACTIVE'
         LIMIT 1
         `,
         [memberId, trainerId]
     );
 
-    return rows.length > 0 ? rows[0] : null;
+    return rows.length > 0;
 };
 
 
-// Create diet plan
+// Create diet plan entry
 const createDietPlan = async (
     trainerId,
     memberId,
-    title,
-    planName,
-    dailyCalories,
-    dailyProtein,
-    cheatDaysPerWeek
+    dietDay,
+    mealType,
+    foodName,
+    calories,
+    protein,
+    notes
 ) => {
     const [result] = await pool.execute(
         `
@@ -40,22 +37,24 @@ const createDietPlan = async (
         (
             trainer_id,
             member_id,
-            title,
-            plan_name,
-            daily_calories,
-            daily_protein,
-            cheat_days_per_week
+            diet_day,
+            meal_type,
+            food_name,
+            calories,
+            protein,
+            notes
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `,
         [
             trainerId,
             memberId,
-            title,
-            planName,
-            dailyCalories,
-            dailyProtein,
-            cheatDaysPerWeek
+            dietDay,
+            mealType,
+            foodName,
+            calories,
+            protein,
+            notes || null
         ]
     );
 
@@ -63,24 +62,25 @@ const createDietPlan = async (
 };
 
 
-// Get all diet plans created by trainer
+// Get all diet entries created by trainer
 const getTrainerDietPlans = async (trainerId) => {
     const [rows] = await pool.execute(
         `
         SELECT
             dp.id,
-            dp.trainer_id,
             dp.member_id,
-            dp.title,
-            dp.plan_name,
-            dp.daily_calories,
-            dp.daily_protein,
-            dp.cheat_days_per_week,
-            dp.created_at,
-            dp.updated_at,
-
             member.name AS member_name,
-            member.email AS member_email
+            member.email AS member_email,
+
+            dp.diet_day,
+            dp.meal_type,
+            dp.food_name,
+            dp.calories,
+            dp.protein,
+            dp.notes,
+
+            dp.created_at,
+            dp.updated_at
 
         FROM diet_plans dp
 
@@ -90,7 +90,24 @@ const getTrainerDietPlans = async (trainerId) => {
 
         WHERE dp.trainer_id = ?
 
-        ORDER BY dp.created_at DESC
+        ORDER BY
+            dp.member_id,
+            FIELD(
+                dp.diet_day,
+                'MONDAY',
+                'TUESDAY',
+                'WEDNESDAY',
+                'THURSDAY',
+                'FRIDAY',
+                'SATURDAY',
+                'SUNDAY'
+            ),
+            FIELD(
+                dp.meal_type,
+                'BREAKFAST',
+                'LUNCH',
+                'DINNER'
+            )
         `,
         [trainerId]
     );
@@ -99,24 +116,25 @@ const getTrainerDietPlans = async (trainerId) => {
 };
 
 
-// Get one diet plan created by trainer
-const getTrainerDietPlanById = async (planId, trainerId) => {
+// Get one diet entry
+const getTrainerDietPlanById = async (dietPlanId, trainerId) => {
     const [rows] = await pool.execute(
         `
         SELECT
             dp.id,
-            dp.trainer_id,
             dp.member_id,
-            dp.title,
-            dp.plan_name,
-            dp.daily_calories,
-            dp.daily_protein,
-            dp.cheat_days_per_week,
-            dp.created_at,
-            dp.updated_at,
-
             member.name AS member_name,
-            member.email AS member_email
+            member.email AS member_email,
+
+            dp.diet_day,
+            dp.meal_type,
+            dp.food_name,
+            dp.calories,
+            dp.protein,
+            dp.notes,
+
+            dp.created_at,
+            dp.updated_at
 
         FROM diet_plans dp
 
@@ -129,61 +147,67 @@ const getTrainerDietPlanById = async (planId, trainerId) => {
 
         LIMIT 1
         `,
-        [planId, trainerId]
+        [dietPlanId, trainerId]
     );
 
     return rows.length > 0 ? rows[0] : null;
 };
 
 
-// Delete diet plan
-const deleteTrainerDietPlan = async (planId, trainerId) => {
+// Update diet entry
+const updateDietPlan = async (
+    dietPlanId,
+    trainerId,
+    dietDay,
+    mealType,
+    foodName,
+    calories,
+    protein,
+    notes
+) => {
+    const [result] = await pool.execute(
+        `
+        UPDATE diet_plans
+
+        SET
+            diet_day = ?,
+            meal_type = ?,
+            food_name = ?,
+            calories = ?,
+            protein = ?,
+            notes = ?
+
+        WHERE id = ?
+          AND trainer_id = ?
+        `,
+        [
+            dietDay,
+            mealType,
+            foodName,
+            calories,
+            protein,
+            notes || null,
+            dietPlanId,
+            trainerId
+        ]
+    );
+
+    return result.affectedRows;
+};
+
+
+// Delete diet entry
+const deleteDietPlan = async (dietPlanId, trainerId) => {
     const [result] = await pool.execute(
         `
         DELETE FROM diet_plans
         WHERE id = ?
           AND trainer_id = ?
         `,
-        [planId, trainerId]
+        [dietPlanId, trainerId]
     );
 
-    return result.affectedRows > 0;
-};
-
-// Update diet plan
-const updateTrainerDietPlan = async (
-    planId,
-    trainerId,
-    title,
-    planName,
-    dailyCalories,
-    dailyProtein,
-    cheatDaysPerWeek
-) => {
-    const [result] = await pool.execute(
-        `
-        UPDATE diet_plans
-        SET
-            title = ?,
-            plan_name = ?,
-            daily_calories = ?,
-            daily_protein = ?,
-            cheat_days_per_week = ?
-        WHERE id = ?
-          AND trainer_id = ?
-        `,
-        [
-            title,
-            planName,
-            dailyCalories,
-            dailyProtein,
-            cheatDaysPerWeek,
-            planId,
-            trainerId
-        ]
-    );
-
-    return result.affectedRows > 0;
+    return result.affectedRows;
 };
 
 
@@ -192,6 +216,6 @@ module.exports = {
     createDietPlan,
     getTrainerDietPlans,
     getTrainerDietPlanById,
-    updateTrainerDietPlan,
-    deleteTrainerDietPlan
+    updateDietPlan,
+    deleteDietPlan
 };

@@ -20,22 +20,27 @@ const getCheckInDays = async (memberId) => {
 
 
 /*
- * Get current diet plan
- * assigned to the logged-in member.
+ * Get today's diet plan
  *
- * Latest diet plan is treated as
- * the current diet plan.
+ * The current day is automatically detected
+ * from the database server date.
+ *
+ * Example:
+ * Monday    -> Monday meals
+ * Tuesday   -> Tuesday meals
+ * Wednesday -> Wednesday meals
  */
-const getCurrentDietPlan = async (memberId) => {
+const getTodayDietPlan = async (memberId) => {
     const [rows] = await pool.execute(
         `
         SELECT
             dp.id,
-            dp.title,
-            dp.plan_name,
-            dp.daily_calories,
-            dp.daily_protein,
-            dp.cheat_days_per_week,
+            dp.diet_day,
+            dp.meal_type,
+            dp.food_name,
+            dp.calories,
+            dp.protein,
+            dp.notes,
             dp.created_at,
             dp.updated_at,
 
@@ -51,14 +56,30 @@ const getCurrentDietPlan = async (memberId) => {
 
         WHERE dp.member_id = ?
 
-        ORDER BY dp.created_at DESC
+          AND dp.diet_day =
+            CASE DAYOFWEEK(CURDATE())
+                WHEN 1 THEN 'SUNDAY'
+                WHEN 2 THEN 'MONDAY'
+                WHEN 3 THEN 'TUESDAY'
+                WHEN 4 THEN 'WEDNESDAY'
+                WHEN 5 THEN 'THURSDAY'
+                WHEN 6 THEN 'FRIDAY'
+                WHEN 7 THEN 'SATURDAY'
+            END
 
-        LIMIT 1
+        ORDER BY
+            FIELD(
+                dp.meal_type,
+                'BREAKFAST',
+                'LUNCH',
+                'DINNER'
+            ),
+            dp.id ASC
         `,
         [memberId]
     );
 
-    return rows.length > 0 ? rows[0] : null;
+    return rows;
 };
 
 
@@ -98,6 +119,16 @@ const getNotificationCount = async (memberId) => {
 
     return rows[0].total;
 };
+
+
+/*
+ * Get the latest progress record
+ * from the previous calendar month.
+ *
+ * Example:
+ * Current month = September
+ * Result = latest progress from August
+ */
 const getPreviousMonthProgress = async (memberId) => {
     const [rows] = await pool.execute(
         `
@@ -137,6 +168,18 @@ const getPreviousMonthProgress = async (memberId) => {
     return rows.length > 0 ? rows[0] : null;
 };
 
+
+/*
+ * Get today's workout plans
+ *
+ * Monday    -> MONDAY workout
+ * Tuesday   -> TUESDAY workout
+ * Wednesday -> WEDNESDAY workout
+ * etc.
+ *
+ * Only workouts belonging to the
+ * logged-in member are returned.
+ */
 const getTodayWorkoutPlans = async (memberId) => {
     const [rows] = await pool.execute(
         `
@@ -170,7 +213,7 @@ const getTodayWorkoutPlans = async (memberId) => {
 
         WHERE wp.member_id = ?
 
-        AND wpe.workout_day =
+          AND wpe.workout_day =
             CASE DAYOFWEEK(CURDATE())
                 WHEN 1 THEN 'SUNDAY'
                 WHEN 2 THEN 'MONDAY'
@@ -181,9 +224,11 @@ const getTodayWorkoutPlans = async (memberId) => {
                 WHEN 7 THEN 'SATURDAY'
             END
 
-        AND e.status = 'ACTIVE'
+          AND e.status = 'ACTIVE'
 
-        ORDER BY wp.id DESC, wpe.id ASC
+        ORDER BY
+            wp.id DESC,
+            wpe.id ASC
         `,
         [memberId]
     );
@@ -191,9 +236,10 @@ const getTodayWorkoutPlans = async (memberId) => {
     return rows;
 };
 
+
 module.exports = {
     getCheckInDays,
-    getCurrentDietPlan,
+    getTodayDietPlan,
     getWorkoutPlansCount,
     getNotificationCount,
     getPreviousMonthProgress,

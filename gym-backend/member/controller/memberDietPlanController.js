@@ -1,63 +1,101 @@
 const {
     getMemberDietPlans,
-    getMemberDietPlanById
+    getMemberDietPlanById,
+    getTodayDietPlan
 } = require('../model/memberDietPlanModel');
 
 
-/**
- * GET /api/member/diet-plans
- *
- * Member can see only their own diet plans
- */
+// Get complete weekly diet
 const getDietPlans = async (req, res) => {
     try {
+
         const memberId = req.user.id;
 
-        const plans = await getMemberDietPlans(memberId);
+        const dietPlans = await getMemberDietPlans(memberId);
 
         return res.status(200).json({
-            count: plans.length,
-            diet_plans: plans
+            success: true,
+            count: dietPlans.length,
+            diet_plans: dietPlans
         });
 
     } catch (error) {
+
         console.error('Get member diet plans error:', error);
 
         return res.status(500).json({
-            message: 'Failed to get diet plans'
+            success: false,
+            message: 'Failed to fetch diet plans'
         });
     }
 };
 
 
-/**
- * GET /api/member/diet-plans/:id
- *
- * Member can see one of their own diet plans
- */
+// Get one diet entry
 const getDietPlan = async (req, res) => {
     try {
+
         const memberId = req.user.id;
-        const planId = req.params.id;
+        const dietPlanId = req.params.id;
 
         const dietPlan = await getMemberDietPlanById(
-            planId,
+            dietPlanId,
             memberId
         );
 
         if (!dietPlan) {
             return res.status(404).json({
-                message: 'Diet plan not found or not available to you'
+                success: false,
+                message: 'Diet plan not found'
             });
         }
 
-        return res.status(200).json(dietPlan);
+        return res.status(200).json({
+            success: true,
+            diet_plan: dietPlan
+        });
 
     } catch (error) {
+
         console.error('Get member diet plan error:', error);
 
         return res.status(500).json({
-            message: 'Failed to get diet plan'
+            success: false,
+            message: 'Failed to fetch diet plan'
+        });
+    }
+};
+
+
+// Get today's diet
+const getTodayDiet = async (req, res) => {
+    try {
+
+        const memberId = req.user.id;
+
+        const dietPlans = await getTodayDietPlan(memberId);
+
+        const today = new Date().toLocaleDateString(
+            'en-US',
+            {
+                weekday: 'long'
+            }
+        ).toUpperCase();
+
+        return res.status(200).json({
+            success: true,
+            day: today,
+            count: dietPlans.length,
+            diet_plans: dietPlans
+        });
+
+    } catch (error) {
+
+        console.error('Get today diet error:', error);
+
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch today diet'
         });
     }
 };
@@ -65,5 +103,6 @@ const getDietPlan = async (req, res) => {
 
 module.exports = {
     getDietPlans,
-    getDietPlan
+    getDietPlan,
+    getTodayDiet
 };

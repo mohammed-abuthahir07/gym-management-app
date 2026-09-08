@@ -7,13 +7,12 @@ const roleMiddleware = require('../../middleware/roleMiddleware');
 
 const {
     getDietPlans,
-    getDietPlan
+    getDietPlan,
+    getTodayDiet
 } = require('../controller/memberDietPlanController');
 
 
-/**
- * Get all diet plans of logged-in member
- */
+// Get complete weekly diet
 router.get(
     '/diet-plans',
     authMiddleware,
@@ -22,14 +21,21 @@ router.get(
 );
 
 
-/**
- * Get one diet plan of logged-in member
- */
+// Get one diet entry
 router.get(
     '/diet-plans/:id',
     authMiddleware,
     roleMiddleware('MEMBER'),
     getDietPlan
+);
+
+
+// Get today's diet
+router.get(
+    '/diet-plans/today',
+    authMiddleware,
+    roleMiddleware('MEMBER'),
+    getTodayDiet
 );
 
 

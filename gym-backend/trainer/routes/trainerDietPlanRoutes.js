@@ -9,12 +9,12 @@ const {
     assignDietPlan,
     getDietPlans,
     getDietPlan,
-    updateDietPlan,
-    deleteDietPlan
+    editDietPlan,
+    removeDietPlan
 } = require('../controller/trainerDietPlanController');
 
 
-// Create / assign diet plan
+// Assign diet
 router.post(
     '/diet-plans',
     authMiddleware,
@@ -23,7 +23,7 @@ router.post(
 );
 
 
-// Get all diet plans
+// Get all trainer diet plans
 router.get(
     '/diet-plans',
     authMiddleware,
@@ -46,7 +46,7 @@ router.put(
     '/diet-plans/:id',
     authMiddleware,
     roleMiddleware('TRAINER'),
-    updateDietPlan
+    editDietPlan
 );
 
 
@@ -55,7 +55,7 @@ router.delete(
     '/diet-plans/:id',
     authMiddleware,
     roleMiddleware('TRAINER'),
-    deleteDietPlan
+    removeDietPlan
 );
 
 
