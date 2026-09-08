@@ -18,6 +18,7 @@ const adminContentRoutes = require('./admin/routes/adminContentRoutes');
 const adminAnalyticsRoutes = require('./admin/routes/adminAnalyticsRoutes');
 const memberExerciseRoutes = require('./member/routes/memberExerciseRoutes');
 const memberChallengeRoutes = require('./member/routes/memberChallengeRoutes');
+const memberProgressRoutes = require('./member/routes/memberProgressRoutes');
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/member/auth', memberAuthRoutes);
 app.use('/api/member', memberExerciseRoutes);
 app.use('/api/member', memberChallengeRoutes);
+app.use('/api/member', memberProgressRoutes);
 
 // TRAINER SIDE API
 app.use('/api/trainer/auth', trainerAuthRoutes);
