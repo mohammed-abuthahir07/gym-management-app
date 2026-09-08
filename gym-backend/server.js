@@ -22,6 +22,7 @@ const memberProgressRoutes = require('./member/routes/memberProgressRoutes');
 const memberProfileRoutes = require('./member/routes/memberProfileRoutes');
 const adminNotificationRoutes = require('./admin/routes/adminNotificationRoutes');
 const memberNotificationRoutes = require('./member/routes/memberNotificationRoutes');
+const trainerAssignedRoutes =require('./trainer/routes/trainerAssignedRoutes');
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use('/api/member',memberNotificationRoutes);
 
 // TRAINER SIDE API
 app.use('/api/trainer/auth', trainerAuthRoutes);
+app.use( '/api/trainer',trainerAssignedRoutes);
 
 // ADMIN SIDE API
 app.use('/api/admin/auth', adminAuthRoutes);
