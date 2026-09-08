@@ -1,6 +1,7 @@
 const pool = require('../../config/db');
 
 
+// Check whether member is assigned to this trainer
 const checkMemberAssignedToTrainer = async (memberId, trainerId) => {
     const [rows] = await pool.execute(
         `
@@ -23,6 +24,7 @@ const checkMemberAssignedToTrainer = async (memberId, trainerId) => {
 };
 
 
+// Create diet plan
 const createDietPlan = async (
     trainerId,
     memberId,
@@ -61,6 +63,7 @@ const createDietPlan = async (
 };
 
 
+// Get all diet plans created by trainer
 const getTrainerDietPlans = async (trainerId) => {
     const [rows] = await pool.execute(
         `
@@ -96,6 +99,7 @@ const getTrainerDietPlans = async (trainerId) => {
 };
 
 
+// Get one diet plan created by trainer
 const getTrainerDietPlanById = async (planId, trainerId) => {
     const [rows] = await pool.execute(
         `
@@ -132,9 +136,62 @@ const getTrainerDietPlanById = async (planId, trainerId) => {
 };
 
 
+// Delete diet plan
+const deleteTrainerDietPlan = async (planId, trainerId) => {
+    const [result] = await pool.execute(
+        `
+        DELETE FROM diet_plans
+        WHERE id = ?
+          AND trainer_id = ?
+        `,
+        [planId, trainerId]
+    );
+
+    return result.affectedRows > 0;
+};
+
+// Update diet plan
+const updateTrainerDietPlan = async (
+    planId,
+    trainerId,
+    title,
+    planName,
+    dailyCalories,
+    dailyProtein,
+    cheatDaysPerWeek
+) => {
+    const [result] = await pool.execute(
+        `
+        UPDATE diet_plans
+        SET
+            title = ?,
+            plan_name = ?,
+            daily_calories = ?,
+            daily_protein = ?,
+            cheat_days_per_week = ?
+        WHERE id = ?
+          AND trainer_id = ?
+        `,
+        [
+            title,
+            planName,
+            dailyCalories,
+            dailyProtein,
+            cheatDaysPerWeek,
+            planId,
+            trainerId
+        ]
+    );
+
+    return result.affectedRows > 0;
+};
+
+
 module.exports = {
     checkMemberAssignedToTrainer,
     createDietPlan,
     getTrainerDietPlans,
-    getTrainerDietPlanById
+    getTrainerDietPlanById,
+    updateTrainerDietPlan,
+    deleteTrainerDietPlan
 };

@@ -2,10 +2,12 @@ const {
     checkMemberAssignedToTrainer,
     createDietPlan,
     getTrainerDietPlans,
-    getTrainerDietPlanById
+    getTrainerDietPlanById,
+    updateTrainerDietPlan,
+    deleteTrainerDietPlan
 } = require('../model/trainerDietPlanModel');
 
-
+// Assign diet plan to member
 const assignDietPlan = async (req, res) => {
     try {
         const trainerId = req.user.id;
@@ -47,9 +49,7 @@ const assignDietPlan = async (req, res) => {
 
 
         // Validate protein
-        if (
-            Number(daily_protein) <= 0
-        ) {
+        if (Number(daily_protein) <= 0) {
             return res.status(400).json({
                 message: 'Daily protein must be greater than 0'
             });
@@ -89,6 +89,7 @@ const assignDietPlan = async (req, res) => {
         }
 
 
+        // Create diet plan
         const dietPlanId = await createDietPlan(
             trainerId,
             member_id,
@@ -100,6 +101,7 @@ const assignDietPlan = async (req, res) => {
         );
 
 
+        // Get created diet plan
         const dietPlan = await getTrainerDietPlanById(
             dietPlanId,
             trainerId
@@ -120,7 +122,121 @@ const assignDietPlan = async (req, res) => {
     }
 };
 
+// Update diet plan
+const updateDietPlan = async (req, res) => {
+    try {
+        const trainerId = req.user.id;
+        const { id } = req.params;
 
+        const {
+            title,
+            plan_name,
+            daily_calories,
+            daily_protein,
+            cheat_days_per_week
+        } = req.body;
+
+
+        // Required field validation
+        if (
+            !title ||
+            !plan_name ||
+            daily_calories === undefined ||
+            daily_protein === undefined ||
+            cheat_days_per_week === undefined
+        ) {
+            return res.status(400).json({
+                message: 'All diet plan fields are required'
+            });
+        }
+
+
+        // Validate calories
+        if (
+            !Number.isInteger(Number(daily_calories)) ||
+            Number(daily_calories) <= 0
+        ) {
+            return res.status(400).json({
+                message: 'Daily calories must be a positive number'
+            });
+        }
+
+
+        // Validate protein
+        if (Number(daily_protein) <= 0) {
+            return res.status(400).json({
+                message: 'Daily protein must be greater than 0'
+            });
+        }
+
+
+        // Validate cheat days
+        if (
+            !Number.isInteger(Number(cheat_days_per_week)) ||
+            Number(cheat_days_per_week) < 0 ||
+            Number(cheat_days_per_week) > 7
+        ) {
+            return res.status(400).json({
+                message: 'Cheat days per week must be between 0 and 7'
+            });
+        }
+
+
+        // Check that this diet plan belongs to this trainer
+        const existingPlan = await getTrainerDietPlanById(
+            id,
+            trainerId
+        );
+
+        if (!existingPlan) {
+            return res.status(404).json({
+                message: 'Diet plan not found or you are not authorized to update it'
+            });
+        }
+
+
+        // Update diet plan
+        const updated = await updateTrainerDietPlan(
+            id,
+            trainerId,
+            title.trim(),
+            plan_name.trim(),
+            Number(daily_calories),
+            Number(daily_protein),
+            Number(cheat_days_per_week)
+        );
+
+
+        if (!updated) {
+            return res.status(400).json({
+                message: 'Diet plan was not updated'
+            });
+        }
+
+
+        // Get updated plan
+        const updatedDietPlan = await getTrainerDietPlanById(
+            id,
+            trainerId
+        );
+
+
+        return res.status(200).json({
+            message: 'Diet plan updated successfully',
+            diet_plan: updatedDietPlan
+        });
+
+    } catch (error) {
+        console.error('Update diet plan error:', error);
+
+        return res.status(500).json({
+            message: 'Failed to update diet plan'
+        });
+    }
+};
+
+
+// Get all diet plans created by trainer
 const getDietPlans = async (req, res) => {
     try {
         const trainerId = req.user.id;
@@ -142,6 +258,7 @@ const getDietPlans = async (req, res) => {
 };
 
 
+// Get one diet plan
 const getDietPlan = async (req, res) => {
     try {
         const trainerId = req.user.id;
@@ -170,8 +287,47 @@ const getDietPlan = async (req, res) => {
 };
 
 
+// Delete diet plan
+const deleteDietPlan = async (req, res) => {
+    try {
+        const trainerId = req.user.id;
+        const { id } = req.params;
+
+
+        const deleted = await deleteTrainerDietPlan(
+            id,
+            trainerId
+        );
+
+
+        if (!deleted) {
+            return res.status(404).json({
+                success: false,
+                message: 'Diet plan not found or you are not authorized to delete it'
+            });
+        }
+
+
+        return res.status(200).json({
+            success: true,
+            message: 'Diet plan deleted successfully'
+        });
+
+    } catch (error) {
+        console.error('Delete diet plan error:', error);
+
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to delete diet plan'
+        });
+    }
+};
+
+
 module.exports = {
     assignDietPlan,
     getDietPlans,
-    getDietPlan
+    getDietPlan,
+    updateDietPlan,
+    deleteDietPlan
 };
