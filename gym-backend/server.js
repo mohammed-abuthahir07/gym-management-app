@@ -36,9 +36,7 @@ const memberDashboardRoutes = require('./member/routes/memberDashboardRoutes');
 const memberCheatDayRoutes = require('./member/routes/memberCheatDayRoutes');
 const trainerCheatDayRoutes = require('./trainer/routes/trainerCheatDayRoutes');
 
-
 const app = express();
-
 
 app.use(cors());
 app.use(express.json());
