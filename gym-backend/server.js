@@ -35,6 +35,8 @@ const trainerDashboardRoutes = require('./trainer/routes/trainerDashboardRoutes'
 const memberDashboardRoutes = require('./member/routes/memberDashboardRoutes');
 const memberCheatDayRoutes = require('./member/routes/memberCheatDayRoutes');
 const trainerCheatDayRoutes = require('./trainer/routes/trainerCheatDayRoutes');
+const adminFeeRoutes = require('./admin/routes/adminFeeRoutes');
+const memberFeeRoutes = require('./member/routes/memberFeeRoutes');
 
 const app = express();
 
@@ -59,6 +61,7 @@ app.use('/api/member', memberDietPlanRoutes);
 app.use('/api/member', memberMessageRoutes);
 app.use('/api/member', memberDashboardRoutes);
 app.use('/api/member', memberCheatDayRoutes);
+app.use('/api/member', memberFeeRoutes);
 
 // TRAINER SIDE API
 app.use('/api/trainer/auth', trainerAuthRoutes);
@@ -85,6 +88,7 @@ app.use('/api/admin/dashboard', adminDashboardRoutes);
 app.use('/api/admin/dashboard', adminDashboardRoutes);
 app.use('/api/admin/content', adminContentRoutes);  
 app.use('/api/admin/analytics', adminAnalyticsRoutes);
+app.use('/api/admin', adminFeeRoutes);
 
 const PORT = process.env.PORT || 5000;
 
