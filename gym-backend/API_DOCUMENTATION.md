@@ -199,6 +199,36 @@ error = 500
 | 128 | GET | /api/admin/analytics/plan | ADMIN | JWT |
 | 129 | GET | /api/admin/analytics/promotion | ADMIN | JWT |
 | 130 | GET | /api/admin/analytics/challenge | ADMIN | JWT |
+/api/admin/dashboard/current-month-revenue
+GET /api/admin/dashboard/current-year-revenue
+GET http://localhost:5000/api/admin/dashboard/total-revenue
+GET /api/admin/report/current-month-revenue
+GET /api/admin/report/current-year-revenue
+GET /api/admin/report/total-revenue
+GET /api/admin/report/current-month-checkins
+GET /api/admin/report/current-year-checkins
+GET /api/admin/report/current-month-unpaid
+POST /api/admin/fees => request = {
+    "member_id": 4,
+    "member_name": "Mohammed Abuthahir",
+    "member_email": "mohammed@gmail.com",
+    "fitness_goal": "Build muscle",
+    "fee_amount": 1500,
+    "fee_date": "2026-09-09",
+    "fee_month": "SEPTEMBER",
+    "fee_year": 2026,
+    "payment_status": "PAID"
+}
+GET /api/admin/fees
+GET /api/admin/fees/member/:memberId
+GET /api/admin/fees/member/:ID
+PUT /api/admin/fees/:id
+DELETE /api/admin/fees/:id
+GET /api/admin/fees/current-month
+GET /api/member/fees
+GET /api/member/fees/:id
+GET /api/member/fees/current-month/paid-status
+GET /api/member/fees/paid-history
 
 # Public APIs
 
@@ -5662,3 +5692,5 @@ error = 500
     "success": false,
     "message": "Failed to fetch recent challenges"
 }
+
+
