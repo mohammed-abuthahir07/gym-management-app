@@ -38,6 +38,7 @@ const trainerCheatDayRoutes = require('./trainer/routes/trainerCheatDayRoutes');
 const adminFeeRoutes = require('./admin/routes/adminFeeRoutes');
 const memberFeeRoutes = require('./member/routes/memberFeeRoutes');
 const adminReportRoutes = require('./admin/routes/adminReportRoutes');
+const memberAnalyticsRoutes = require('./member/routes/memberAnalyticsRoutes');
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.use('/api/member', memberMessageRoutes);
 app.use('/api/member', memberDashboardRoutes);
 app.use('/api/member', memberCheatDayRoutes);
 app.use('/api/member', memberFeeRoutes);
+app.use('/api/member', memberAnalyticsRoutes);
 
 // TRAINER SIDE API
 app.use('/api/trainer/auth', trainerAuthRoutes);
