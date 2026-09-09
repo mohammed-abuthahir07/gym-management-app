@@ -229,6 +229,11 @@ GET /api/member/fees
 GET /api/member/fees/:id
 GET /api/member/fees/current-month/paid-status
 GET /api/member/fees/paid-history
+GET /api/trainer/analytics/today-workouts
+GET /api/member/analytics/current-month-payment-status
+GET /api/member/analytics/tomorrow-workout
+GET /api/member/analytics/current-month-cheat-meals
+GET /api/member/analytics/current-month-progress
 
 # Public APIs
 
