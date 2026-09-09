@@ -207,6 +207,97 @@ const getRecentChallenges = async (req, res) => {
 };
 
 
+// ========================================
+// CURRENT MONTH REVENUE
+// ========================================
+
+const getAdminCurrentMonthRevenue = async (req, res) => {
+    try {
+        const revenue =
+            await dashboardModel.getCurrentMonthRevenue();
+
+        const month = new Date()
+            .toLocaleString('en-US', {
+                month: 'long'
+            })
+            .toUpperCase();
+
+        const year = new Date().getFullYear();
+
+        return res.status(200).json({
+            success: true,
+            month,
+            year,
+            revenue: Number(revenue || 0)
+        });
+
+    } catch (error) {
+        console.error(
+            'Admin current month revenue error:',
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch current month revenue'
+        });
+    }
+};
+
+
+const getAdminCurrentYearRevenue = async (req, res) => {
+    try {
+        const revenue =
+            await dashboardModel.getCurrentYearRevenue();
+
+        const year = new Date().getFullYear();
+
+        return res.status(200).json({
+            success: true,
+            year,
+            revenue: Number(revenue || 0)
+        });
+
+    } catch (error) {
+        console.error(
+            'Admin current year revenue error:',
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch current year revenue'
+        });
+    }
+};
+const getAdminTotalRevenue = async (req, res) => {
+    try {
+        const revenue =
+            await dashboardModel.getTotalRevenue();
+
+        return res.status(200).json({
+            success: true,
+            revenue: Number(revenue || 0)
+        });
+
+    } catch (error) {
+        console.error(
+            'Admin total revenue error:',
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch total revenue'
+        });
+    }
+};
+
+
+// ========================================
+// EXPORTS
+// ========================================
+
 module.exports = {
     getMemberDashboard,
     getTrainerDashboard,
@@ -216,5 +307,9 @@ module.exports = {
 
     getRecentPlans,
     getRecentPromotions,
-    getRecentChallenges
+    getRecentChallenges,
+
+    getAdminCurrentMonthRevenue,
+    getAdminCurrentYearRevenue,
+    getAdminTotalRevenue
 };

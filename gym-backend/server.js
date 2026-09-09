@@ -86,7 +86,6 @@ app.use('/api/admin', adminNotificationRoutes);
 app.use('/api/admin/exercises',adminExerciseRoutes);
 app.use('/api/admin/contacts', adminContactRoutes);
 app.use('/api/admin/dashboard', adminDashboardRoutes);
-app.use('/api/admin/dashboard', adminDashboardRoutes);
 app.use('/api/admin/content', adminContentRoutes);  
 app.use('/api/admin/analytics', adminAnalyticsRoutes);
 app.use('/api/admin', adminFeeRoutes);

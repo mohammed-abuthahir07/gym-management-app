@@ -9,8 +9,18 @@ const getMemberDashboard = async () => {
     const [rows] = await pool.query(`
         SELECT
             COUNT(*) AS total_members,
-            SUM(CASE WHEN status = 'ACTIVE' THEN 1 ELSE 0 END) AS active_members,
-            SUM(CASE WHEN status = 'INACTIVE' THEN 1 ELSE 0 END) AS inactive_members
+            SUM(
+                CASE
+                    WHEN status = 'ACTIVE' THEN 1
+                    ELSE 0
+                END
+            ) AS active_members,
+            SUM(
+                CASE
+                    WHEN status = 'INACTIVE' THEN 1
+                    ELSE 0
+                END
+            ) AS inactive_members
         FROM users
         WHERE role = 'MEMBER'
     `);
@@ -27,8 +37,18 @@ const getTrainerDashboard = async () => {
     const [rows] = await pool.query(`
         SELECT
             COUNT(*) AS total_trainers,
-            SUM(CASE WHEN status = 'ACTIVE' THEN 1 ELSE 0 END) AS active_trainers,
-            SUM(CASE WHEN status = 'INACTIVE' THEN 1 ELSE 0 END) AS inactive_trainers
+            SUM(
+                CASE
+                    WHEN status = 'ACTIVE' THEN 1
+                    ELSE 0
+                END
+            ) AS active_trainers,
+            SUM(
+                CASE
+                    WHEN status = 'INACTIVE' THEN 1
+                    ELSE 0
+                END
+            ) AS inactive_trainers
         FROM users
         WHERE role = 'TRAINER'
     `);
@@ -154,14 +174,63 @@ const getRecentChallenges = async () => {
 };
 
 
+// ========================================
+// CURRENT MONTH REVENUE
+// ========================================
+
+const getCurrentMonthRevenue = async () => {
+    const [rows] = await pool.query(`
+        SELECT
+            COALESCE(SUM(fee_amount), 0) AS revenue
+        FROM fees
+        WHERE payment_status = 'PAID'
+          AND fee_year = YEAR(CURDATE())
+          AND fee_month = UPPER(DATE_FORMAT(CURDATE(), '%M'))
+    `);
+
+    return Number(rows[0].revenue || 0);
+};
+
+
+const getCurrentYearRevenue = async () => {
+    const [rows] = await pool.query(`
+        SELECT
+            COALESCE(SUM(fee_amount), 0) AS revenue
+        FROM fees
+        WHERE payment_status = 'PAID'
+          AND fee_year = YEAR(CURDATE())
+    `);
+
+    return Number(rows[0].revenue || 0);
+};
+
+const getTotalRevenue = async () => {
+    const [rows] = await pool.query(`
+        SELECT
+            COALESCE(SUM(fee_amount), 0) AS revenue
+        FROM fees
+        WHERE payment_status = 'PAID'
+    `);
+
+    return Number(rows[0].revenue || 0);
+};
+
+// ========================================
+// EXPORTS
+// ========================================
+
 module.exports = {
     getMemberDashboard,
     getTrainerDashboard,
     getPlanDashboard,
     getPromotionDashboard,
     getChallengeDashboard,
-
+    
     getRecentPlans,
     getRecentPromotions,
-    getRecentChallenges
+    getRecentChallenges,
+
+    getCurrentMonthRevenue,
+    getCurrentYearRevenue,
+    getTotalRevenue,
 };
