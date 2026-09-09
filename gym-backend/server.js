@@ -37,6 +37,7 @@ const memberCheatDayRoutes = require('./member/routes/memberCheatDayRoutes');
 const trainerCheatDayRoutes = require('./trainer/routes/trainerCheatDayRoutes');
 const adminFeeRoutes = require('./admin/routes/adminFeeRoutes');
 const memberFeeRoutes = require('./member/routes/memberFeeRoutes');
+const adminReportRoutes = require('./admin/routes/adminReportRoutes');
 
 const app = express();
 
@@ -89,6 +90,7 @@ app.use('/api/admin/dashboard', adminDashboardRoutes);
 app.use('/api/admin/content', adminContentRoutes);  
 app.use('/api/admin/analytics', adminAnalyticsRoutes);
 app.use('/api/admin', adminFeeRoutes);
+app.use('/api/admin', adminReportRoutes);
 
 const PORT = process.env.PORT || 5000;
 
