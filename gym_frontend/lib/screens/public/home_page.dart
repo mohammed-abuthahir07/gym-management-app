@@ -1,0 +1,262 @@
+import 'package:flutter/material.dart';
+
+import '../../utils/constants.dart';
+import '../../utils/responsive.dart';
+import '../../widgets/common/app_widgets.dart';
+
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final padding = Responsive.pagePadding(context);
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(padding),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1100),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Hero Section
+              Card(
+                clipBehavior: Clip.antiAlias,
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(Responsive.isMobile(context) ? 24 : 48),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        scheme.primary.withValues(alpha: 0.85),
+                        scheme.secondary.withValues(alpha: 0.95),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'PREMIUM FITNESS EXPERIENCE',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        AppConstants.appName,
+                        style: theme.textTheme.displaySmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        AppConstants.brandTagline,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: Colors.white70,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          AppButton(
+                            label: 'Join PeakForge Today',
+                            icon: Icons.person_add_outlined,
+                            onPressed: () => Navigator.pushNamed(context, '/register'),
+                          ),
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              side: const BorderSide(color: Colors.white),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            icon: const Icon(Icons.login),
+                            label: const Text('Member Login'),
+                            onPressed: () => Navigator.pushNamed(context, '/login'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 36),
+
+              // Introduction
+              Text(
+                'Welcome to PeakForge Gym',
+                style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'PeakForge is Madurai\'s premier fitness training facility dedicated to transforming bodies, minds, and lifestyles. We blend state-of-the-art strength machinery, certified elite trainers, customized nutrition planning, and an empowering community culture.',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                  height: 1.5,
+                ),
+              ),
+
+              const SizedBox(height: 36),
+
+              // Why Choose PeakForge
+              Text(
+                'Why Choose PeakForge',
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final cols = Responsive.gridCount(context, mobile: 1, tablet: 2, desktop: 3);
+                  return GridView.count(
+                    crossAxisCount: cols,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: Responsive.isMobile(context) ? 2.2 : 1.7,
+                    children: const [
+                      _FeatureCard(
+                        icon: Icons.fitness_center,
+                        title: 'Elite Equipment',
+                        description: 'Top-tier free weights, Olympic lifting platforms, and ergonomic isolation machines.',
+                      ),
+                      _FeatureCard(
+                        icon: Icons.psychology,
+                        title: 'Certified Personal Trainers',
+                        description: 'Expert mentorship with tailored workout regimens suited to your fitness goals.',
+                      ),
+                      _FeatureCard(
+                        icon: Icons.restaurant_menu,
+                        title: 'Custom Nutrition Plans',
+                        description: 'Calorie-targeted diet blueprints and cheat meal monitoring for steady gains.',
+                      ),
+                      _FeatureCard(
+                        icon: Icons.track_changes,
+                        title: 'Measurement & Progress Tracking',
+                        description: 'Detailed logs for weight, waist, body fat percentage, and strength milestones.',
+                      ),
+                      _FeatureCard(
+                        icon: Icons.timer,
+                        title: 'Extended Training Hours',
+                        description: 'Early morning to late night access so training seamlessly fits your schedule.',
+                      ),
+                      _FeatureCard(
+                        icon: Icons.workspace_premium,
+                        title: 'Rewarding Challenges',
+                        description: 'Engaging monthly fitness challenges with gym rewards, merch, and certificates.',
+                      ),
+                    ],
+                  );
+                },
+              ),
+
+              const SizedBox(height: 36),
+
+              // Call to Action Banner
+              Card(
+                color: scheme.primaryContainer.withValues(alpha: 0.4),
+                child: Padding(
+                  padding: const EdgeInsets.all(28),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Ready to transform your lifestyle?',
+                              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Explore our flexible membership tiers or contact our friendly team for an in-person gym tour.',
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      AppButton(
+                        label: 'Get Started',
+                        onPressed: () => Navigator.pushNamed(context, '/register'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FeatureCard extends StatelessWidget {
+  const _FeatureCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: scheme.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: scheme.primary, size: 24),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 6),
+            Expanded(
+              child: Text(
+                description,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
