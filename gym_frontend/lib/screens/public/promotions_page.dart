@@ -122,7 +122,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
                             ),
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.all(20),
+                            padding: const EdgeInsets.  all(20),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [

@@ -185,14 +185,6 @@ class _PricingPageState extends State<PricingPage> {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 16),
-                                AppButton(
-                                  label: 'Select Plan',
-                                  expanded: true,
-                                  onPressed: () {
-                                    Navigator.pushNamed(context, '/register');
-                                  },
-                                ),
                               ],
                             ),
                           ),
