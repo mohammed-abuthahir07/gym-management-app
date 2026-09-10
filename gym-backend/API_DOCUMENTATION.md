@@ -234,6 +234,10 @@ GET /api/member/analytics/current-month-payment-status
 GET /api/member/analytics/tomorrow-workout
 GET /api/member/analytics/current-month-cheat-meals
 GET /api/member/analytics/current-month-progress
+GET http://localhost:5000/api/trainers
+GET http://localhost:5000/api/content
+GET http://localhost:5000/api/promotions
+GET http://localhost:5000/api/plans
 
 # Public APIs
 
