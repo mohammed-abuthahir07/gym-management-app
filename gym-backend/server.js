@@ -10,7 +10,7 @@ const adminPlanRoutes = require('./admin/routes/adminPlanRoutes');
 const adminPromotionRoutes = require('./admin/routes/adminPromotionRoutes');
 const adminChallengesRoutes = require('./admin/routes/adminChallengesRoutes');
 const adminUserRoutes = require('./admin/routes/adminUserRoutes');
-const contactRoutes = require('./contact/routes/contactRoutes');
+const contactRoutes = require('./public/routes/contactRoutes');
 const adminContactRoutes = require('./admin/routes/adminContactRoutes');
 const adminExerciseRoutes = require('./admin/routes/adminExerciseRoutes');
 const adminDashboardRoutes = require('./admin/routes/adminDashboardRoutes');
@@ -40,6 +40,9 @@ const memberFeeRoutes = require('./member/routes/memberFeeRoutes');
 const adminReportRoutes = require('./admin/routes/adminReportRoutes');
 const memberAnalyticsRoutes = require('./member/routes/memberAnalyticsRoutes');
 const trainerAnalyticsRoutes = require('./trainer/routes/trainerAnalyticsRoutes');
+const publicPlansRoutes = require('./public/routes/publicPlansRoutes');
+const publicPromotionRoutes = require('./public/routes/publicPromotionRoutes');
+const publicContentRoutes = require('./public/routes/publicContentRoutes');
 
 const app = express();
 
@@ -50,6 +53,10 @@ app.use('/uploads', express.static('uploads'));
 
 // PUBLIC SIDE API
 app.use('/api/contact', contactRoutes);
+app.use('/api/plans', publicPlansRoutes);
+app.use('/api/promotions', publicPromotionRoutes);
+app.use('/api/content', publicContentRoutes);
+
 
 // MEMBER SIDE API
 app.use('/api/member/auth', memberAuthRoutes);
