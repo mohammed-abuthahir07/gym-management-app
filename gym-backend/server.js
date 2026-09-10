@@ -43,6 +43,7 @@ const trainerAnalyticsRoutes = require('./trainer/routes/trainerAnalyticsRoutes'
 const publicPlansRoutes = require('./public/routes/publicPlansRoutes');
 const publicPromotionRoutes = require('./public/routes/publicPromotionRoutes');
 const publicContentRoutes = require('./public/routes/publicContentRoutes');
+const publicTrainerRoutes = require('./public/routes/publicTrainerRoutes');
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/plans', publicPlansRoutes);
 app.use('/api/promotions', publicPromotionRoutes);
 app.use('/api/content', publicContentRoutes);
+app.use('/api/trainers', publicTrainerRoutes);
 
 
 // MEMBER SIDE API
