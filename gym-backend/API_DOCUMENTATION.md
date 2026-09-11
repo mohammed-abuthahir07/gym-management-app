@@ -1021,65 +1021,65 @@ error = 500
     "message": "Failed to update profile"
 }
 
-<!-- Member - Notifications -->
-GET /api/member/notifications
+    <!-- Member - Notifications -->
+    GET /api/member/notifications
 
-auth = Bearer JWT
+    auth = Bearer JWT
 
-access = Own member notifications only. Role is not checked in the current implementation.
+    access = Own member notifications only. Role is not checked in the current implementation.
 
-request = None
+    request = None
 
-response = {
-    "count": 1,
-    "notifications": [
-        {
-            "id": 1,
-            "title": "New workout plan",
-            "message": "Your trainer assigned a new workout plan",
-            "is_read": 0,
-            "created_at": "2026-09-09T08:00:00.000Z",
-            "updated_at": "2026-09-09T08:00:00.000Z"
-        }
-    ]
-}
+    response = {
+        "count": 1,
+        "notifications": [
+            {
+                "id": 1,
+                "title": "New workout plan",
+                "message": "Your trainer assigned a new workout plan",
+                "is_read": 0,
+                "created_at": "2026-09-09T08:00:00.000Z",
+                "updated_at": "2026-09-09T08:00:00.000Z"
+            }
+        ]
+    }
 
-error = 500
+    error = 500
 
-{
-    "message": "Server error"
-}
+    {
+        "message": "Server error"
+    }
 
-<!-- Member - Notifications -->
-PUT /api/member/notifications/1/read
+    <!-- Member - Notifications -->
+    PUT /api/member/notifications/1/read
 
-auth = Bearer JWT
+    auth = Bearer JWT
 
-access = Own member notifications only. Role is not checked in the current implementation.
+    access = Own member notifications only. Role is not checked in the current implementation.
 
-request = None
+    request = None
 
-response = {
-    "message": "Notification marked as read"
-}
+    response = {
+        "message": "Notification marked as read"
+    }
 
-error = 200
+    error = 200
 
-{
-    "message": "Notification is already marked as read"
-}
+    {
+        "message": "Notification is already marked as read"
+    }
 
-error = 404
+    error = 404
 
-{
-    "message": "Notification not found"
-}
+    {
+        "message": "Notification not found"
+    }
 
-error = 500
+    error = 500
 
-{
-    "message": "Server error"
-}
+    {
+        "message": "Server error"
+    }
 
 <!-- Member - Class Schedules -->
 GET /api/member/class-schedules

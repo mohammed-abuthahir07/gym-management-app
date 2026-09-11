@@ -56,11 +56,15 @@ class _MemberNotificationsPageState extends State<MemberNotificationsPage> {
       await api.put('/api/member/notifications/$id/read');
       setState(() {
         for (final n in _notifications) {
-          if (n['id'] == id) {
+          if (asNum(n['id']) == id) {
             n['is_read'] = 1;
           }
         }
       });
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      }
     } catch (_) {}
   }
 
@@ -87,14 +91,27 @@ class _MemberNotificationsPageState extends State<MemberNotificationsPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Notifications & Alerts', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        const Text('Announcements from management and updates from your trainer.'),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Notifications & Alerts',
+                            style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 22),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Announcements from management and updates from your trainer.',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     IconButton(
                       tooltip: 'Refresh',
                       onPressed: _fetchNotifications,
@@ -107,18 +124,21 @@ class _MemberNotificationsPageState extends State<MemberNotificationsPage> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: _notifications.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (context, i) {
                     final item = _notifications[i];
                     final id = asNum(item['id']);
                     final title = asString(item['title'], 'Gym Notice');
                     final msg = asString(item['message']);
                     final isRead = asNum(item['is_read']) == 1;
-                    final date = asString(item['created_at']).split('T').first;
+                    
+                    final rawDate = asString(item['created_at']);
+                    final date = rawDate.contains('T') ? rawDate.split('T').first : rawDate;
 
                     return Card(
-                      color: isRead ? null : scheme.primaryContainer.withValues(alpha: 0.15),
+                      color: isRead ? null : scheme.primaryContainer.withOpacity(0.15),
                       child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         leading: CircleAvatar(
                           backgroundColor: isRead ? scheme.surfaceContainerHighest : scheme.primary,
                           child: Icon(
@@ -129,16 +149,18 @@ class _MemberNotificationsPageState extends State<MemberNotificationsPage> {
                         ),
                         title: Text(
                           title,
-                          style: TextStyle(fontWeight: isRead ? FontWeight.w500 : FontWeight.bold),
+                          style: TextStyle(fontWeight: isRead ? FontWeight.w500 : FontWeight.bold, fontSize: 15),
                         ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 4),
-                            Text(msg),
-                            const SizedBox(height: 6),
-                            Text(date, style: TextStyle(fontSize: 11, color: theme.textTheme.bodySmall?.color)),
-                          ],
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(msg, style: TextStyle(color: theme.textTheme.bodyMedium?.color)),
+                              const SizedBox(height: 6),
+                              Text(date, style: TextStyle(fontSize: 11, color: theme.textTheme.bodySmall?.color)),
+                            ],
+                          ),
                         ),
                         trailing: isRead
                             ? null
