@@ -53,8 +53,11 @@ class _MemberProgressPageState extends State<MemberProgressPage> {
 
   Future<void> _openDialog([Map<String, dynamic>? item]) async {
     final isEditing = item != null;
+    final rawDate = isEditing ? asString(item['progress_date']) : '';
+    final formattedDate = rawDate.contains('T') ? rawDate.split('T').first : rawDate;
+
     final dateCtrl = TextEditingController(
-      text: isEditing ? asString(item['progress_date']).split('T').first : DateTime.now().toIso8601String().split('T').first,
+      text: isEditing && formattedDate.isNotEmpty ? formattedDate : DateTime.now().toIso8601String().split('T').first,
     );
     final weightCtrl = TextEditingController(text: isEditing ? asString(item['weight']) : '');
     final bodyFatCtrl = TextEditingController(text: isEditing ? asString(item['body_fat']) : '');
@@ -126,7 +129,7 @@ class _MemberProgressPageState extends State<MemberProgressPage> {
                 TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancel')),
                 AppButton(
                   loading: saving,
-                  label: isEditing ? 'Save' : 'Record',
+                  label: isEditing ? 'Save Changes' : 'Record',
                   onPressed: () async {
                     if (!formKey.currentState!.validate()) return;
                     setDialogState(() => saving = true);
@@ -150,8 +153,8 @@ class _MemberProgressPageState extends State<MemberProgressPage> {
                       if (ctx.mounted) Navigator.pop(ctx);
                       _fetchProgress();
                     } on ApiException catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+                      if (dialogCtx.mounted) {
+                        ScaffoldMessenger.of(dialogCtx).showSnackBar(SnackBar(content: Text(e.message)));
                       }
                     } finally {
                       if (dialogCtx.mounted) setDialogState(() => saving = false);
@@ -219,14 +222,27 @@ class _MemberProgressPageState extends State<MemberProgressPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Body Progress Tracking', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        const Text('Consistent measurement entries to visualize physical gains over time.'),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Body Progress Tracking',
+                            style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 22),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Consistent measurement entries to visualize physical gains over time.',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     AppButton(
                       label: 'Add Entry',
                       icon: Icons.add,
@@ -245,11 +261,12 @@ class _MemberProgressPageState extends State<MemberProgressPage> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: _progressList.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, idx) {
                       final p = _progressList[idx];
                       final id = asNum(p['id']);
-                      final date = asString(p['progress_date']).split('T').first;
+                      final rawDate = asString(p['progress_date']);
+                      final date = rawDate.contains('T') ? rawDate.split('T').first : rawDate;
                       final weight = asNum(p['weight']);
                       final bodyFat = asNum(p['body_fat']);
                       final waist = asNum(p['waist_cm']);
