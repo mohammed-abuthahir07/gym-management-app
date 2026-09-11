@@ -88,6 +88,7 @@ class _MemberExercisesPageState extends State<MemberExercisesPage> {
       isEmpty: _exercises.isEmpty,
       emptyMessage: 'Exercise library is currently empty.',
       child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.all(padding),
         child: Center(
           child: ConstrainedBox(
@@ -98,13 +99,16 @@ class _MemberExercisesPageState extends State<MemberExercisesPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Exercise Library', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        const Text('Explore proper techniques, targeting muscle groups and equipment.'),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          
+                          Text('Exercise Library', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          const Text('Explore proper techniques, targeting muscle groups and equipment.'),
+                        ],
+                      ),
                     ),
                     IconButton(
                       tooltip: 'Refresh',
@@ -166,7 +170,7 @@ class _MemberExercisesPageState extends State<MemberExercisesPage> {
                           crossAxisCount: cols,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
-                          childAspectRatio: Responsive.isMobile(context) ? 1.4 : 1.15,
+                          childAspectRatio: Responsive.isMobile(context) ? 1.3 : 1.05,
                         ),
                         itemCount: filtered.length,
                         itemBuilder: (context, idx) {
@@ -186,53 +190,50 @@ class _MemberExercisesPageState extends State<MemberExercisesPage> {
                               children: [
                                 if (imgUrl.isNotEmpty)
                                   SizedBox(
-                                    height: 110,
+                                    height: 120,
                                     width: double.infinity,
-                                    child: NetworkImageSafe(url: imgUrl, height: 110),
+                                    child: NetworkImageSafe(url: imgUrl, height: 120),
                                   ),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                name,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                              ),
-                                            ),
-                                            StatusBadge(label: difficulty),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          '$muscle • $equipment',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: scheme.primary,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Expanded(
-                                          child: Text(
-                                            instructions.isNotEmpty ? instructions : 'Follow proper form and control breathing.',
-                                            maxLines: 3,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: theme.textTheme.bodySmall?.color,
+                                Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              name,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                             ),
                                           ),
+                                          const SizedBox(width: 8),
+                                          StatusBadge(label: difficulty),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        '$muscle • $equipment',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: scheme.primary,
+                                          fontWeight: FontWeight.w600,
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        instructions.isNotEmpty ? instructions : 'Follow proper form and control breathing.',
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: theme.textTheme.bodySmall?.color,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
