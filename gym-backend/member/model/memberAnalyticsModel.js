@@ -43,8 +43,8 @@ const getCurrentMonthPaymentStatus = async (memberId) => {
             payment_status
         FROM fees
         WHERE member_id = ?
-          AND fee_year = YEAR(CURDATE())
-          AND fee_month = UPPER(DATE_FORMAT(CURDATE(), '%M'))
+          AND YEAR(fee_date) = YEAR(CURDATE())
+          AND MONTH(fee_date) = MONTH(CURDATE())
         ORDER BY fee_date DESC, id DESC
         LIMIT 1
     `, [memberId]);

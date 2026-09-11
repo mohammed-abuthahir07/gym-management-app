@@ -90,17 +90,21 @@ const getCurrentMonthProgress = async (req, res) => {
 ==================================================
 2. CURRENT MONTH PAYMENT STATUS
 ==================================================
+
 */
 
 const getCurrentMonthPaymentStatus = async (req, res) => {
     try {
 
-        // IMPORTANT:
-        // Never accept member_id from request
+        // Member ID comes ONLY from JWT
         const memberId = req.user.id;
+
+
 
         const fee =
             await analyticsModel.getCurrentMonthPaymentStatus(memberId);
+
+        console.log('PAYMENT ANALYTICS FEE:', fee);
 
         const now = new Date();
 
@@ -110,6 +114,7 @@ const getCurrentMonthPaymentStatus = async (req, res) => {
 
         const year = now.getFullYear();
 
+        // No fee found for current month
         if (!fee) {
             return res.status(200).json({
                 success: true,
@@ -121,12 +126,16 @@ const getCurrentMonthPaymentStatus = async (req, res) => {
             });
         }
 
+        // Fee found
+        const paymentStatus =
+            String(fee.payment_status || '').toUpperCase();
+
         return res.status(200).json({
             success: true,
             month,
             year,
-            payment_status: fee.payment_status,
-            paid: fee.payment_status === 'PAID',
+            payment_status: paymentStatus,
+            paid: paymentStatus === 'PAID',
             fee_amount: fee.fee_amount
         });
 
@@ -143,6 +152,8 @@ const getCurrentMonthPaymentStatus = async (req, res) => {
         });
     }
 };
+
+
 
 
 /*
