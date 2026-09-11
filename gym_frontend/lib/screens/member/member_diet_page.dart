@@ -83,13 +83,15 @@ class _MemberDietPageState extends State<MemberDietPage> with SingleTickerProvid
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Assigned Nutrition Plans', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        const Text('Follow dietary targets formulated by your trainer.'),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Assigned Nutrition Plans', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          const Text('Follow dietary targets formulated by your trainer.'),
+                        ],
+                      ),
                     ),
                     IconButton(
                       tooltip: 'Refresh',
@@ -167,7 +169,15 @@ class _MemberDietPageState extends State<MemberDietPage> with SingleTickerProvid
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(food, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          Expanded(
+                            child: Text(
+                              food, 
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
                           StatusBadge(label: day.isNotEmpty ? day : meal),
                         ],
                       ),
@@ -176,11 +186,12 @@ class _MemberDietPageState extends State<MemberDietPage> with SingleTickerProvid
                       const SizedBox(height: 6),
                       Wrap(
                         spacing: 16,
+                        runSpacing: 4,
                         children: [
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.local_fire_department, size: 16, color: Colors.orange),
+                              const Icon(Icons.local_fire_department, size: 16, color: Colors.orange),
                               const SizedBox(width: 4),
                               Text('$cal kcal', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                             ],
@@ -197,7 +208,10 @@ class _MemberDietPageState extends State<MemberDietPage> with SingleTickerProvid
                       ),
                       if (notes.isNotEmpty) ...[
                         const SizedBox(height: 8),
-                        Text('Notes: $notes', style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: theme.textTheme.bodySmall?.color)),
+                        Text(
+                          'Notes: $notes', 
+                          style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: theme.textTheme.bodySmall?.color),
+                        ),
                       ],
                     ],
                   ),
