@@ -53,8 +53,11 @@ class _MemberCheatDaysPageState extends State<MemberCheatDaysPage> {
 
   Future<void> _openDialog([Map<String, dynamic>? item]) async {
     final isEditing = item != null;
+    final rawDate = isEditing ? asString(item['cheat_date']) : '';
+    final formattedDate = rawDate.contains('T') ? rawDate.split('T').first : rawDate;
+
     final dateCtrl = TextEditingController(
-      text: isEditing ? asString(item['cheat_date']).split('T').first : DateTime.now().toIso8601String().split('T').first,
+      text: isEditing && formattedDate.isNotEmpty ? formattedDate : DateTime.now().toIso8601String().split('T').first,
     );
     final foodCtrl = TextEditingController(text: isEditing ? asString(item['food_name']) : '');
     final qtyCtrl = TextEditingController(text: isEditing ? asString(item['quantity']) : '');
@@ -138,7 +141,9 @@ class _MemberCheatDaysPageState extends State<MemberCheatDaysPage> {
                       if (ctx.mounted) Navigator.pop(ctx);
                       _fetchCheatDays();
                     } on ApiException catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+                      if (dialogCtx.mounted) {
+                        ScaffoldMessenger.of(dialogCtx).showSnackBar(SnackBar(content: Text(e.message)));
+                      }
                     } finally {
                       if (dialogCtx.mounted) setDialogState(() => saving = false);
                     }
@@ -205,14 +210,17 @@ class _MemberCheatDaysPageState extends State<MemberCheatDaysPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Cheat Meal Diary', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        const Text('Transparently log treats so your coach can balance your calories.'),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Cheat Meal Diary', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 22), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 4),
+                          const Text('Transparently log treats so your coach can balance your calories.', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12)),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     AppButton(
                       label: 'Log Cheat Meal',
                       icon: Icons.add,
@@ -238,7 +246,8 @@ class _MemberCheatDaysPageState extends State<MemberCheatDaysPage> {
                       final food = asString(item['food_name'], 'Cheat Item');
                       final qty = asString(item['quantity']);
                       final cal = asNum(item['calories']);
-                      final date = asString(item['cheat_date']).split('T').first;
+                      final rawDate = asString(item['cheat_date']);
+                      final date = rawDate.contains('T') ? rawDate.split('T').first : rawDate;
                       final notes = asString(item['notes']);
 
                       return Card(
@@ -258,7 +267,10 @@ class _MemberCheatDaysPageState extends State<MemberCheatDaysPage> {
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(food, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                        Expanded(
+                                          child: Text(food, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                        ),
+                                        const SizedBox(width: 8),
                                         Text(date, style: TextStyle(fontSize: 12, color: theme.textTheme.bodySmall?.color)),
                                       ],
                                     ),
