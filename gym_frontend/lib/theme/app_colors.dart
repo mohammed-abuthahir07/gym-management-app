@@ -57,6 +57,50 @@ class AppPalettes {
     secondary: Color(0xFF7F1D1D),
   );
 
+  // --- Newly Added Color Combinations ---
+
+  static const teal = AppPalette(
+    id: 'teal',
+    name: 'Teal',
+    primary: Color(0xFF0D9488),
+    secondary: Color(0xFF134E4A),
+  );
+
+  static const cyan = AppPalette(
+    id: 'cyan',
+    name: 'Cyan',
+    primary: Color(0xFF0284C7),
+    secondary: Color(0xFF082F49),
+  );
+
+  static const pink = AppPalette(
+    id: 'pink',
+    name: 'Pink',
+    primary: Color(0xFFDB2777),
+    secondary: Color(0xFF831843),
+  );
+
+  static const indigo = AppPalette(
+    id: 'indigo',
+    name: 'Indigo',
+    primary: Color(0xFF4F46E5),
+    secondary: Color(0xFF311059),
+  );
+
+  static const amber = AppPalette(
+    id: 'amber',
+    name: 'Amber',
+    primary: Color(0xFFD97706),
+    secondary: Color(0xFF78350F),
+  );
+
+  static const slate = AppPalette(
+    id: 'slate',
+    name: 'Slate Dark',
+    primary: Color(0xFF64748B),
+    secondary: Color(0xFF020617),
+  );
+
   static const all = <AppPalette>[
     peakForge,
     blue,
@@ -64,6 +108,12 @@ class AppPalettes {
     purple,
     orange,
     red,
+    teal,
+    cyan,
+    pink,
+    indigo,
+    amber,
+    slate,
   ];
 
   static AppPalette byId(String? id) {
