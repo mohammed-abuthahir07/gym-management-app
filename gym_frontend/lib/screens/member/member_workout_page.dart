@@ -110,13 +110,15 @@ class _MemberWorkoutPageState extends State<MemberWorkoutPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('My Workout Plans', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 4),
-                          const Text('Review your assigned routines and track daily exercise completion.'),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('My Workout Plans', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 4),
+                            const Text('Review your assigned routines and track daily exercise completion.'),
+                          ],
+                        ),
                       ),
                       IconButton(
                         tooltip: 'Refresh',
@@ -147,22 +149,37 @@ class _MemberWorkoutPageState extends State<MemberWorkoutPage> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Row(
-                                    children: [
-                                      CircleAvatar(
-                                        backgroundColor: scheme.primary.withValues(alpha: 0.12),
-                                        child: Icon(Icons.fitness_center, color: scheme.primary),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(planName, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                                          Text('Trainer: $trainerName', style: theme.textTheme.bodySmall),
-                                        ],
-                                      ),
-                                    ],
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          backgroundColor: scheme.primary.withValues(alpha: 0.12),
+                                          child: Icon(Icons.fitness_center, color: scheme.primary),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                planName, 
+                                                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              Text(
+                                                'Trainer: $trainerName', 
+                                                style: theme.textTheme.bodySmall,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
+                                  const SizedBox(width: 8),
                                   StatusBadge(label: '${exercises.length} Exercises'),
                                 ],
                               ),
@@ -197,7 +214,14 @@ class _MemberWorkoutPageState extends State<MemberWorkoutPage> {
                                       contentPadding: EdgeInsets.zero,
                                       title: Row(
                                         children: [
-                                          Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                          Expanded(
+                                            child: Text(
+                                              name, 
+                                              style: const TextStyle(fontWeight: FontWeight.bold),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
                                           const SizedBox(width: 8),
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
