@@ -25,6 +25,10 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
     _fetchChallenges();
   }
 
+  // ============================================================
+  // GET ACTIVE CHALLENGES
+  // ============================================================
+
   Future<void> _fetchChallenges() async {
     if (mounted) {
       setState(() {
@@ -78,6 +82,10 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
     }
   }
 
+  // ============================================================
+  // DATE FORMAT
+  // ============================================================
+
   String _formatDate(dynamic value) {
     final raw = asString(value);
 
@@ -101,6 +109,10 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
       return raw;
     }
   }
+
+  // ============================================================
+  // BUILD
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -131,6 +143,7 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
                   _buildHeader(
                     context,
                     theme,
+                    scheme,
                   ),
 
                   const SizedBox(height: 24),
@@ -150,9 +163,14 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
     );
   }
 
+  // ============================================================
+  // HEADER
+  // ============================================================
+
   Widget _buildHeader(
     BuildContext context,
     ThemeData theme,
+    ColorScheme scheme,
   ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,6 +184,7 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   fontSize: 22,
+                  color: scheme.onSurface,
                 ),
               ),
 
@@ -175,6 +194,7 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
                 'Push your limits, hit milestones, and earn exclusive rewards.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontSize: 13,
+                  color: scheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -186,13 +206,18 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
         IconButton(
           tooltip: 'Refresh challenges',
           onPressed: _loading ? null : _fetchChallenges,
-          icon: const Icon(
+          icon: Icon(
             Icons.refresh,
+            color: scheme.onSurface,
           ),
         ),
       ],
     );
   }
+
+  // ============================================================
+  // RESPONSIVE CHALLENGE LIST
+  // ============================================================
 
   Widget _buildChallengeList(
     BuildContext context,
@@ -208,7 +233,7 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
               context,
               _challenges[index],
             ),
-            if (index != _challenges.length - 1)
+            if (index < _challenges.length - 1)
               const SizedBox(height: 16),
           ],
         ],
@@ -217,14 +242,14 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final cardWidth = (constraints.maxWidth - 16) / 2;
+        final width = (constraints.maxWidth - 16) / 2;
 
         return Wrap(
           spacing: 16,
           runSpacing: 16,
           children: _challenges.map((challenge) {
             return SizedBox(
-              width: cardWidth,
+              width: width,
               child: _buildChallengeCard(
                 context,
                 challenge,
@@ -235,6 +260,10 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
       },
     );
   }
+
+  // ============================================================
+  // CHALLENGE CARD
+  // ============================================================
 
   Widget _buildChallengeCard(
     BuildContext context,
@@ -267,16 +296,26 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
     );
 
     return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
-      elevation: 1,
+      color: scheme.surfaceContainerHighest,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: scheme.outlineVariant,
+          width: 1,
+        ),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ------------------------------------------------------------
-            // TITLE ROW
-            // ------------------------------------------------------------
+            // ========================================================
+            // TITLE
+            // ========================================================
+
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -284,14 +323,12 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: scheme.primary.withValues(
-                      alpha: 0.12,
-                    ),
+                    color: scheme.primaryContainer,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.military_tech_outlined,
-                    color: scheme.primary,
+                    color: scheme.onPrimaryContainer,
                     size: 24,
                   ),
                 ),
@@ -302,6 +339,7 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
                   child: Text(
                     title,
                     style: theme.textTheme.titleMedium?.copyWith(
+                      color: scheme.onSurface,
                       fontWeight: FontWeight.bold,
                       fontSize: 17,
                     ),
@@ -314,20 +352,19 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
 
             const SizedBox(height: 16),
 
-            // ------------------------------------------------------------
+            // ========================================================
             // DURATION
-            // ------------------------------------------------------------
+            // ========================================================
+
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: scheme.surfaceContainerHighest.withValues(
-                  alpha: 0.45,
-                ),
+                color: scheme.surface,
                 borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: scheme.outlineVariant,
+                ),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -338,7 +375,7 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
                     color: scheme.primary,
                   ),
 
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 9),
 
                   Expanded(
                     child: Column(
@@ -347,16 +384,18 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
                         Text(
                           'Challenge Duration',
                           style: theme.textTheme.labelMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
 
-                        const SizedBox(height: 3),
+                        const SizedBox(height: 4),
 
                         Text(
                           '$startDate  →  $endDate',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w500,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurface,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -368,12 +407,14 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
 
             const SizedBox(height: 16),
 
-            // ------------------------------------------------------------
+            // ========================================================
             // DESCRIPTION
-            // ------------------------------------------------------------
+            // ========================================================
+
             Text(
               description,
               style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
                 height: 1.45,
               ),
               maxLines: 4,
@@ -382,6 +423,10 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
 
             const SizedBox(height: 18),
 
+            // ========================================================
+            // DIVIDER
+            // ========================================================
+
             Divider(
               height: 1,
               color: scheme.outlineVariant,
@@ -389,19 +434,28 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
 
             const SizedBox(height: 14),
 
-            // ------------------------------------------------------------
+            // ========================================================
             // REWARD
-            // ------------------------------------------------------------
+            // ========================================================
+
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.card_giftcard_outlined,
-                  size: 19,
-                  color: scheme.primary,
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: scheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Icon(
+                    Icons.card_giftcard_outlined,
+                    size: 18,
+                    color: scheme.onSecondaryContainer,
+                  ),
                 ),
 
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
 
                 Expanded(
                   child: Column(
@@ -410,6 +464,7 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
                       Text(
                         'Reward',
                         style: theme.textTheme.labelMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -419,8 +474,9 @@ class _MemberChallengesPageState extends State<MemberChallengesPage> {
                       Text(
                         reward,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
                           color: scheme.primary,
+                          fontWeight: FontWeight.bold,
+                          height: 1.35,
                         ),
                       ),
                     ],
