@@ -101,7 +101,7 @@ class HomePage extends StatelessWidget {
 
               const SizedBox(height: 48),
 
-              // 2. Stats Row (Makes the page look professional & authoritative)
+              // 2. Stats Row
               LayoutBuilder(
                 builder: (context, constraints) {
                   final isMobile = Responsive.isMobile(context);
@@ -132,6 +132,57 @@ class HomePage extends StatelessWidget {
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
                   height: 1.6,
+                ),
+              ),
+
+              const SizedBox(height: 48),
+
+              // 3.1 NEW: Featured Banner Showcase (workout.jpg)
+              Card(
+                clipBehavior: Clip.antiAlias,
+                child: Stack(
+                  alignment: Alignment.bottomLeft,
+                  children: [
+                    Image.asset(
+                      'assets/workout.jpg',
+                      height: 260,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                    Container(
+                      height: 260,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.black.withValues(alpha: 0.85), Colors.transparent],
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'PUSH YOUR LIMITS EVERY SINGLE DAY',
+                            style: TextStyle(color: Colors.amber, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.1),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'State-of-the-Art Training Floors',
+                            style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Equipped with top-grade free weights and professional racks for ultimate performance.',
+                            style: TextStyle(color: Colors.white70, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
@@ -191,7 +242,7 @@ class HomePage extends StatelessWidget {
 
               const SizedBox(height: 48),
 
-              // 5. Training Programs / Classes Section (Extra length & value)
+              // 5. Training Programs / Classes Section
               Text(
                 'Our Specialized Programs',
                 style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
@@ -236,6 +287,135 @@ class HomePage extends StatelessWidget {
                     ],
                   );
                 },
+              ),
+
+              const SizedBox(height: 48),
+
+              // 5.1 NEW: Specialized Visual Showcase Grid (sixpacks.jpg & womensixpacks.jpg)
+              Text(
+                'Transformations & Specialized Focus',
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Real transformations engineered through targeted core and physique routines.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                ),
+              ),
+              const SizedBox(height: 16),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final cols = Responsive.gridCount(context, mobile: 1, tablet: 2, desktop: 2);
+                  return GridView.count(
+                    crossAxisCount: cols,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: 1.4,
+                    children: const [
+                      _ImageShowcaseCard(
+                        imagePath: 'assets/sixpacks.jpg',
+                        title: 'Advanced Core & Shredding',
+                        subtitle: 'Sculpt definition and carve ultimate abdominal strength.',
+                      ),
+                      _ImageShowcaseCard(
+                        imagePath: 'assets/womensixpacks.jpg',
+                        title: 'Total Tone & Conditioning',
+                        subtitle: 'Empowering women core development and functional core stability.',
+                      ),
+                    ],
+                  );
+                },
+              ),
+
+              const SizedBox(height: 48),
+
+              // 5.2 NEW: Group Workouts & Elite Trainers Section (groupworkout.jpg & ladyTrainer.jpg)
+              Text(
+                'Community & Expert Coaching',
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final cols = Responsive.gridCount(context, mobile: 1, tablet: 2, desktop: 2);
+                  return GridView.count(
+                    crossAxisCount: cols,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: 1.4,
+                    children: const [
+                      _ImageShowcaseCard(
+                        imagePath: 'assets/groupworkout.jpg',
+                        title: 'High-Energy Group Sessions',
+                        subtitle: 'Feed off the collective drive in our specialized community bootcamps.',
+                      ),
+                      _ImageShowcaseCard(
+                        imagePath: 'assets/ladyTrainer.jpg',
+                        title: 'Dedicated Expert Coaching',
+                        subtitle: 'Get 1-on-1 personalized mentoring from certified professional trainers.',
+                      ),
+                    ],
+                  );
+                },
+              ),
+
+              const SizedBox(height: 48),
+
+              // 5.3 NEW: Monthly Challenges Banner (challenges.jpg)
+              Card(
+                clipBehavior: Clip.antiAlias,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/challenges.jpg',
+                      height: 220,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                    Container(
+                      height: 220,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.65),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.military_tech, color: Colors.amber, size: 40),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'JOIN OUR MONTHLY FITNESS CHALLENGES',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.1),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Push past your comfort zone, win exciting merchandise, badges, and recognition.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.white70, fontSize: 13),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: scheme.primary,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () => Navigator.pushNamed(context, '/register'),
+                            child: const Text('View Active Challenges'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 48),
@@ -436,6 +616,62 @@ class _ProgramCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// Helper widget to display cards with embedded local assets
+class _ImageShowcaseCard extends StatelessWidget {
+  const _ImageShowcaseCard({
+    required this.imagePath,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final String imagePath;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            imagePath,
+            fit: BoxFit.cover,
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.black.withValues(alpha: 0.9), Colors.black.withValues(alpha: 0.2)],
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

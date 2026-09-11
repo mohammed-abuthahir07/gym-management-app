@@ -51,21 +51,24 @@ class _PublicShellState extends State<PublicShell> {
       index: _index,
       onSelect: (value) => setState(() => _index = value),
       trailing: Row(
-        children: [
-          TextButton(
-            onPressed: () => Navigator.pushNamed(context, '/login'),
-            child: const Text('Login'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pushNamed(context, '/register'),
-            child: const Text('Register'),
-          ),
-          if (auth.isLoggedIn)
-            TextButton(
-              onPressed: () => Navigator.pushNamed(context, auth.homeRouteForRole()),
-              child: const Text('Dashboard'),
-            ),
-        ],
+        mainAxisSize: MainAxisSize.min,
+        children: auth.isLoggedIn
+            ? [
+                TextButton(
+                  onPressed: () => Navigator.pushNamed(context, auth.homeRouteForRole()),
+                  child: const Text('Dashboard'),
+                ),
+              ]
+            : [
+                TextButton(
+                  onPressed: () => Navigator.pushNamed(context, '/login'),
+                  child: const Text('Login'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pushNamed(context, '/register'),
+                  child: const Text('Register'),
+                ),
+              ],
       ),
       // Wrap the active body page and append the footer in a SingleChildScrollView
       body: SingleChildScrollView(

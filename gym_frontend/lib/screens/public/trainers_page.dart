@@ -98,7 +98,7 @@ class _PublicTrainersPageState extends State<PublicTrainersPage> {
                         crossAxisCount: cols,
                         crossAxisSpacing: 20,
                         mainAxisSpacing: 20,
-                        childAspectRatio: Responsive.isMobile(context) ? 1.9 : 1.35,
+                        childAspectRatio: Responsive.isMobile(context) ? 1.15 : 1.05,
                       ),
                       itemCount: _trainers.length,
                       itemBuilder: (context, index) {
@@ -116,55 +116,67 @@ class _PublicTrainersPageState extends State<PublicTrainersPage> {
                           child: Padding(
                             padding: const EdgeInsets.all(20),
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 26,
-                                      backgroundColor: scheme.primary.withValues(alpha: 0.15),
-                                      child: Icon(Icons.person, color: scheme.primary, size: 28),
-                                    ),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            name,
-                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          StatusBadge(label: status, positive: status == 'ACTIVE'),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                                // Centered Avatar
+                                CircleAvatar(
+                                  radius: 32,
+                                  backgroundColor: scheme.primary.withValues(alpha: 0.15),
+                                  child: Icon(Icons.person, color: scheme.primary, size: 34),
                                 ),
+                                const SizedBox(height: 12),
+                                
+                                // Centered Name
+                                Text(
+                                  name,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                
+                                // Centered Status Badge
+                                StatusBadge(label: status, positive: status == 'ACTIVE'),
+                                
                                 const SizedBox(height: 16),
                                 const Divider(),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 12),
+                                
+                                // Centered Email Row
                                 Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(Icons.email_outlined, size: 16, color: scheme.primary),
                                     const SizedBox(width: 8),
-                                    Expanded(
+                                    Flexible(
                                       child: Text(
                                         email.isNotEmpty ? email : 'trainer@peakforge.gym',
+                                        textAlign: TextAlign.center,
                                         style: const TextStyle(fontSize: 13),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 8),
+                                
+                                // Centered Phone Row
                                 Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(Icons.phone_outlined, size: 16, color: scheme.primary),
                                     const SizedBox(width: 8),
-                                    Expanded(
+                                    Flexible(
                                       child: Text(
                                         phone.isNotEmpty ? phone : 'Contact via gym desk',
+                                        textAlign: TextAlign.center,
                                         style: const TextStyle(fontSize: 13),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
