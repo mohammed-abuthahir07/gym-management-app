@@ -98,7 +98,7 @@ class _PublicTrainersPageState extends State<PublicTrainersPage> {
                         crossAxisCount: cols,
                         crossAxisSpacing: 20,
                         mainAxisSpacing: 20,
-                        childAspectRatio: Responsive.isMobile(context) ? 1.6 : 1.35,
+                        childAspectRatio: Responsive.isMobile(context) ? 1.9 : 1.35,
                       ),
                       itemCount: _trainers.length,
                       itemBuilder: (context, index) {

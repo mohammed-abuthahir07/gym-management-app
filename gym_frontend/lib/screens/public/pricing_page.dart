@@ -99,7 +99,7 @@ class _PricingPageState extends State<PricingPage> {
                         crossAxisCount: cols,
                         crossAxisSpacing: 20,
                         mainAxisSpacing: 20,
-                        childAspectRatio: Responsive.isMobile(context) ? 1.05 : 0.82,
+                        childAspectRatio: Responsive.isMobile(context) ? 1.2 : 0.82,
                       ),
                       itemCount: _plans.length,
                       itemBuilder: (context, index) {

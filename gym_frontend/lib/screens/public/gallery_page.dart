@@ -77,6 +77,7 @@ class _GalleryPageState extends State<GalleryPage> {
                 const SizedBox(height: 12),
                 Text(
                   'PeakForge Facility & Community Gallery',
+                  textAlign: TextAlign.center,
                   style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
@@ -98,7 +99,8 @@ class _GalleryPageState extends State<GalleryPage> {
                         crossAxisCount: cols,
                         crossAxisSpacing: 20,
                         mainAxisSpacing: 20,
-                        childAspectRatio: Responsive.isMobile(context) ? 1 : 0.30,
+                        // CHANGED: Increased mobile ratio from 1.05 to 1.3 to remove empty space
+                        childAspectRatio: Responsive.isMobile(context) ? 1.4 : 0.85,
                       ),
                       itemCount: _items.length,
                       itemBuilder: (context, index) {
@@ -113,8 +115,10 @@ class _GalleryPageState extends State<GalleryPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                flex: 3,
+                              // Image container with fixed height instead of Expanded
+                              SizedBox(
+                                height: Responsive.isMobile(context) ? 180 : 200,
+                                width: double.infinity,
                                 child: NetworkImageSafe(
                                   url: fullImageUrl,
                                   height: double.infinity,
@@ -122,36 +126,32 @@ class _GalleryPageState extends State<GalleryPage> {
                                   fit: BoxFit.cover,
                                 ),
                               ),
-                              Expanded(
-                                flex: 2,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        title,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
+                              // Text Padding Section
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
                                       ),
-                                      const SizedBox(height: 6),
-                                      Expanded(
-                                        child: Text(
-                                          desc,
-                                          maxLines: 3,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
-                                          ),
-                                        ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      desc,
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],

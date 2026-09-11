@@ -213,7 +213,7 @@ class HomePage extends StatelessWidget {
                     physics: const NeverScrollableScrollPhysics(),
                     mainAxisSpacing: 16,
                     crossAxisSpacing: 16,
-                    childAspectRatio: 1.4,
+                    childAspectRatio: 1.9,
                     children: [
                       _ProgramCard(
                         title: 'Hypertrophy & Mass',
