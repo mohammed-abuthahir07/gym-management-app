@@ -129,7 +129,8 @@ class _MemberDashboardPageState extends State<MemberDashboardPage> {
                         physics: const NeverScrollableScrollPhysics(),
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 16,
-                        childAspectRatio: Responsive.isMobile(context) ? 1.4 : 1.6,
+                        // Fixed: Lowered aspect ratio on mobile to give cards more height and prevent text overflow
+                        childAspectRatio: Responsive.isMobile(context) ? 1.2 : 1.6,
                         children: [
                           StatCard(
                             title: 'Check-In Days',
