@@ -21,7 +21,7 @@ class HomePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Hero Section
+              // 1. Hero Section
               Card(
                 clipBehavior: Clip.antiAlias,
                 child: Container(
@@ -99,25 +99,45 @@ class HomePage extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 36),
+              const SizedBox(height: 48),
 
-              // Introduction
+              // 2. Stats Row (Makes the page look professional & authoritative)
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isMobile = Responsive.isMobile(context);
+                  return Row(
+                    children: [
+                      Expanded(child: _buildStatItem(context, '5K+', 'Active Members')),
+                      SizedBox(width: isMobile ? 8 : 16),
+                      Expanded(child: _buildStatItem(context, '15+', 'Expert Trainers')),
+                      SizedBox(width: isMobile ? 8 : 16),
+                      Expanded(child: _buildStatItem(context, '30+', 'Modern Machines')),
+                      SizedBox(width: isMobile ? 8 : 16),
+                      Expanded(child: _buildStatItem(context, '100%', 'Result Focused')),
+                    ],
+                  );
+                },
+              ),
+
+              const SizedBox(height: 48),
+
+              // 3. Introduction Section
               Text(
                 'Welcome to PeakForge Gym',
                 style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Text(
-                'PeakForge is Madurai\'s premier fitness training facility dedicated to transforming bodies, minds, and lifestyles. We blend state-of-the-art strength machinery, certified elite trainers, customized nutrition planning, and an empowering community culture.',
+                'PeakForge is Madurai\'s premier fitness training facility dedicated to transforming bodies, minds, and lifestyles. We blend state-of-the-art strength machinery, certified elite trainers, customized nutrition planning, and an empowering community culture designed to bring out the absolute best version of you.',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
-                  height: 1.5,
+                  height: 1.6,
                 ),
               ),
 
-              const SizedBox(height: 36),
+              const SizedBox(height: 48),
 
-              // Why Choose PeakForge
+              // 4. Why Choose PeakForge (Grid)
               Text(
                 'Why Choose PeakForge',
                 style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
@@ -169,9 +189,92 @@ class HomePage extends StatelessWidget {
                 },
               ),
 
-              const SizedBox(height: 36),
+              const SizedBox(height: 48),
 
-              // Call to Action Banner
+              // 5. Training Programs / Classes Section (Extra length & value)
+              Text(
+                'Our Specialized Programs',
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Choose a structured program curated specifically for your fitness objective.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                ),
+              ),
+              const SizedBox(height: 16),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final cols = Responsive.gridCount(context, mobile: 1, tablet: 2, desktop: 3);
+                  return GridView.count(
+                    crossAxisCount: cols,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: 1.4,
+                    children: [
+                      _ProgramCard(
+                        title: 'Hypertrophy & Mass',
+                        subtitle: 'Build serious muscle volume with progressive overload frameworks.',
+                        icon: Icons.bolt,
+                        color: scheme.primary,
+                      ),
+                      _ProgramCard(
+                        title: 'Fat Loss & Shred',
+                        subtitle: 'High-intensity interval routines combined with metabolic conditioning.',
+                        icon: Icons.local_fire_department,
+                        color: Colors.orange,
+                      ),
+                      _ProgramCard(
+                        title: 'Strength & Power',
+                        subtitle: 'Master compound movements like Squat, Bench, and Deadlift safely.',
+                        icon: Icons.shield,
+                        color: Colors.blueAccent,
+                      ),
+                    ],
+                  );
+                },
+              ),
+
+              const SizedBox(height: 48),
+
+              // 6. Testimonials / Success Stories Section
+              Text(
+                'Success Stories',
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final cols = Responsive.gridCount(context, mobile: 1, tablet: 2, desktop: 2);
+                  return GridView.count(
+                    crossAxisCount: cols,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: 2.0,
+                    children: const [
+                      _TestimonialCard(
+                        name: 'Karthik Raja',
+                        role: 'Member for 8 months',
+                        quote: 'PeakForge completely changed my routine. Lost 12 kgs and gained serious confidence thanks to the trainers!',
+                      ),
+                      _TestimonialCard(
+                        name: 'Priya Sundar',
+                        role: 'Member for 1 year',
+                        quote: 'The best gym environment in Madurai. Clean, state-of-the-art equipment, and extremely motivating atmosphere.',
+                      ),
+                    ],
+                  );
+                },
+              ),
+
+              const SizedBox(height: 48),
+
+              // 7. Call to Action Banner
               Card(
                 color: scheme.primaryContainer.withValues(alpha: 0.4),
                 child: Padding(
@@ -202,9 +305,42 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(BuildContext context, String value, String label) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Card(
+      elevation: 0,
+      color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              value,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: scheme.primary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w500,
+                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -253,6 +389,105 @@ class _FeatureCard extends StatelessWidget {
                   color: Theme.of(context).textTheme.bodySmall?.color,
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProgramCard extends StatelessWidget {
+  const _ProgramCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 6),
+            Expanded(
+              child: Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TestimonialCard extends StatelessWidget {
+  const _TestimonialCard({
+    required this.name,
+    required this.role,
+    required this.quote,
+  });
+
+  final String name;
+  final String role;
+  final String quote;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '"$quote"',
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
+                  child: Text(
+                    name[0],
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    Text(role, style: TextStyle(fontSize: 11, color: theme.textTheme.bodySmall?.color)),
+                  ],
+                ),
+              ],
             ),
           ],
         ),

@@ -11,6 +11,7 @@ import 'location_page.dart';
 import 'pricing_page.dart';
 import 'promotions_page.dart';
 import 'trainers_page.dart';
+import 'public_footer.dart';
 
 class PublicShell extends StatefulWidget {
   const PublicShell({super.key});
@@ -25,15 +26,17 @@ class _PublicShellState extends State<PublicShell> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
-    final pages = const [
-      HomePage(),
-      PricingPage(),
-      PromotionsPage(),
-      GalleryPage(),
-      PublicTrainersPage(),
-      LocationPage(),
-      ContactPage(),
+    
+    final pages = [
+      const HomePage(),
+      const PricingPage(),
+      const PromotionsPage(),
+      const GalleryPage(),
+      const PublicTrainersPage(),
+      const LocationPage(),
+      const ContactPage(),
     ];
+
     return AppShell(
       title: AppConstants.appName,
       items: const [
@@ -64,7 +67,21 @@ class _PublicShellState extends State<PublicShell> {
             ),
         ],
       ),
-      body: pages[_index],
+      // Wrap the active body page and append the footer in a SingleChildScrollView
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            pages[_index],
+            PublicFooter(
+              onNavigateTab: (newIndex) {
+                setState(() {
+                  _index = newIndex;
+                });
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

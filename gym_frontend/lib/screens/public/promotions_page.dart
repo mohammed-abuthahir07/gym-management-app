@@ -98,7 +98,8 @@ class _PromotionsPageState extends State<PromotionsPage> {
                         crossAxisCount: cols,
                         crossAxisSpacing: 20,
                         mainAxisSpacing: 20,
-                        childAspectRatio: Responsive.isMobile(context) ? 1.4 : 1.2,
+                        // Adjusted aspect ratio for a tight, well-fitted card
+                        childAspectRatio: Responsive.isMobile(context) ? 1.35 : 1.25,
                       ),
                       itemCount: _promotions.length,
                       itemBuilder: (context, index) {
@@ -115,19 +116,22 @@ class _PromotionsPageState extends State<PromotionsPage> {
                             : '₹${discount.toStringAsFixed(0)} FLAT OFF';
 
                         return Card(
+                          elevation: 2,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                             side: BorderSide(
-                              color: scheme.primary.withValues(alpha: 0.3),
+                              color: scheme.primary.withValues(alpha: 0.25),
+                              width: 1.5,
                             ),
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.  all(20),
+                            padding: const EdgeInsets.all(20),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                // Top Row: Title & Badge
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Expanded(
                                       child: Text(
@@ -137,8 +141,9 @@ class _PromotionsPageState extends State<PromotionsPage> {
                                         ),
                                       ),
                                     ),
+                                    const SizedBox(width: 8),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                       decoration: BoxDecoration(
                                         color: scheme.primary,
                                         borderRadius: BorderRadius.circular(8),
@@ -148,58 +153,81 @@ class _PromotionsPageState extends State<PromotionsPage> {
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 12,
+                                          fontSize: 11,
                                         ),
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 8),
-                                if (desc.isNotEmpty) ...[
-                                  Expanded(
-                                    child: Text(
-                                      desc,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
-                                      ),
+                                const SizedBox(height: 10),
+
+                                // Description
+                                SizedBox(
+                                  height: 40, // Fixed height to keep spacing uniform
+                                  child: Text(
+                                    desc.isNotEmpty ? desc : 'Unlock special discounts on your next gym membership plan.',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.75),
                                     ),
                                   ),
-                                ] else ...[
-                                  const Spacer(),
-                                ],
-                                const Divider(),
-                                const SizedBox(height: 8),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        const Text('Promo Code', style: TextStyle(fontSize: 11)),
-                                        SelectableText(
-                                          code,
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 15,
-                                            color: scheme.primary,
-                                            letterSpacing: 1.1,
-                                          ),
-                                        ),
-                                      ],
+                                ),
+                                const Spacer(),
+
+                                // Promo Box Container (Ticket Style)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: scheme.outlineVariant.withValues(alpha: 0.5),
                                     ),
-                                    if (endDate.isNotEmpty)
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
                                       Column(
-                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          const Text('Valid Until', style: TextStyle(fontSize: 11)),
-                                          Text(
-                                            endDate.length > 10 ? endDate.substring(0, 10) : endDate,
-                                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                          const Text(
+                                            'PROMO CODE',
+                                            style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.8),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          SelectableText(
+                                            code,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w900,
+                                              fontSize: 14,
+                                              color: scheme.primary,
+                                              letterSpacing: 1.1,
+                                            ),
                                           ),
                                         ],
                                       ),
-                                  ],
+                                      if (endDate.isNotEmpty)
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                          children: [
+                                            const Text(
+                                              'VALID UNTIL',
+                                              style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.8),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              endDate.length > 10 ? endDate.substring(0, 10) : endDate,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),

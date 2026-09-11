@@ -98,7 +98,7 @@ class _GalleryPageState extends State<GalleryPage> {
                         crossAxisCount: cols,
                         crossAxisSpacing: 20,
                         mainAxisSpacing: 20,
-                        childAspectRatio: Responsive.isMobile(context) ? 1.05 : 0.85,
+                        childAspectRatio: Responsive.isMobile(context) ? 1 : 0.30,
                       ),
                       itemCount: _items.length,
                       itemBuilder: (context, index) {
