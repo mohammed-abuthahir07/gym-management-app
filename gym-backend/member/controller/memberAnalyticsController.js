@@ -104,8 +104,6 @@ const getCurrentMonthPaymentStatus = async (req, res) => {
         const fee =
             await analyticsModel.getCurrentMonthPaymentStatus(memberId);
 
-        console.log('PAYMENT ANALYTICS FEE:', fee);
-
         const now = new Date();
 
         const month = now.toLocaleString('en-US', {
