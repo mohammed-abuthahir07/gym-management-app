@@ -45,6 +45,7 @@ const publicPromotionRoutes = require('./public/routes/publicPromotionRoutes');
 const publicContentRoutes = require('./public/routes/publicContentRoutes');
 const publicTrainerRoutes = require('./public/routes/publicTrainerRoutes');
 const adminProfileRoutes = require('./admin/routes/profileRoutes');
+const trainerProfileRoutes = require('./trainer/routes/trainerProfileRoutes');
 
 const app = express();
 
@@ -87,6 +88,7 @@ app.use('/api/trainer', trainerMessageRoutes);
 app.use('/api/trainer', trainerDashboardRoutes);
 app.use('/api/trainer', trainerCheatDayRoutes);
 app.use('/api/trainer', trainerAnalyticsRoutes);
+app.use( '/api/trainer/profile', trainerProfileRoutes);
 
 
 // ADMIN SIDE API
