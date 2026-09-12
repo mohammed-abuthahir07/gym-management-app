@@ -43,6 +43,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
     final api = context.read<ApiService>();
     try {
+      // Corrected to match your Express routes (/api/admin/...)
       final results = await Future.wait([
         api.get('/api/admin/dashboard/member').catchError((_) => <String, dynamic>{}),
         api.get('/api/admin/dashboard/trainer').catchError((_) => <String, dynamic>{}),
@@ -68,17 +69,18 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       final rChalRes = results[9] is Map ? results[9] as Map : {};
 
       setState(() {
-        _memberCount = asNum(memRes['data']?['total_members'] ?? memRes['total_members']);
-        _trainerCount = asNum(trRes['data']?['total_trainers'] ?? trRes['total_trainers']);
-        _planCount = asNum(planRes['data']?['total_plans'] ?? planRes['total_plans']);
-        _promotionCount = asNum(promoRes['data']?['total_promotions'] ?? promoRes['total_promotions']);
-        _challengeCount = asNum(chalRes['data']?['total_challenges'] ?? chalRes['total_challenges']);
-        _monthRevenue = asNum(monthRevRes['revenue'] ?? monthRevRes['total_revenue'] ?? monthRevRes['data']);
-        _totalRevenue = asNum(totRevRes['revenue'] ?? totRevRes['total_revenue'] ?? totRevRes['data']);
+        _memberCount = asNum(memRes['data']?['total_members'] ?? memRes['total_members'] ?? memRes['count'] ?? 0);
+        _trainerCount = asNum(trRes['data']?['total_trainers'] ?? trRes['total_trainers'] ?? trRes['count'] ?? 0);
+        _planCount = asNum(planRes['data']?['total_plans'] ?? planRes['total_plans'] ?? planRes['count'] ?? 0);
+        _promotionCount = asNum(promoRes['data']?['total_promotions'] ?? promoRes['total_promotions'] ?? promoRes['count'] ?? 0);
+        _challengeCount = asNum(chalRes['data']?['total_challenges'] ?? chalRes['total_challenges'] ?? chalRes['count'] ?? 0);
+        
+        _monthRevenue = asNum(monthRevRes['revenue'] ?? monthRevRes['total_revenue'] ?? monthRevRes['data'] ?? 0);
+        _totalRevenue = asNum(totRevRes['revenue'] ?? totRevRes['total_revenue'] ?? totRevRes['data'] ?? 0);
 
-        _recentPlans = asMapList(rPlanRes['data']);
-        _recentPromos = asMapList(rPromoRes['data']);
-        _recentChallenges = asMapList(rChalRes['data']);
+        _recentPlans = asMapList(rPlanRes['data'] ?? rPlanRes['plans'] ?? rPlanRes);
+        _recentPromos = asMapList(rPromoRes['data'] ?? rPromoRes['promotions'] ?? rPromoRes);
+        _recentChallenges = asMapList(rChalRes['data'] ?? rChalRes['challenges'] ?? rChalRes);
       });
     } on ApiException catch (e) {
       setState(() => _error = e.message);
@@ -115,13 +117,18 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('PeakForge Command Center', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 4),
-                          const Text('Real-time overview of members, coaches, revenue, and active programs.'),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'PeakForge Command Center',
+                              style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text('Real-time overview of members, coaches, revenue, and active programs.'),
+                          ],
+                        ),
                       ),
                       IconButton(
                         tooltip: 'Refresh Metrics',
@@ -132,7 +139,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Metrics Cards
+                  // Metrics Grid Cards
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final cols = Responsive.gridCount(context, mobile: 2, tablet: 3, desktop: 4);
@@ -142,7 +149,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                         physics: const NeverScrollableScrollPhysics(),
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 16,
-                        childAspectRatio: Responsive.isMobile(context) ? 1.3 : 1.5,
+                        childAspectRatio: Responsive.isMobile(context) ? 1.25 : 1.4,
                         children: [
                           StatCard(title: 'Active Members', value: '$_memberCount', icon: Icons.people_alt_outlined),
                           StatCard(title: 'Coaching Staff', value: '$_trainerCount', icon: Icons.sports_outlined),
@@ -158,7 +165,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
                   const SizedBox(height: 32),
 
-                  // Recent Plans & Recent Promos
+                  // Recent Lists Section (Responsive Wrap / Column)
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final isMobile = Responsive.isMobile(context);
@@ -166,7 +173,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                         direction: isMobile ? Axis.vertical : Axis.horizontal,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Recent Plans
+                          // Recent Plans Card
                           Expanded(
                             flex: isMobile ? 0 : 1,
                             child: Card(
@@ -208,7 +215,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                           ),
                           if (!isMobile) const SizedBox(width: 16),
                           if (isMobile) const SizedBox(height: 16),
-                          // Recent Promos
+
+                          // Recent Promos Card
                           Expanded(
                             flex: isMobile ? 0 : 1,
                             child: Card(
