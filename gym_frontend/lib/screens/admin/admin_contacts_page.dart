@@ -53,7 +53,8 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
 
   Future<void> _viewEnquiry(num id) async {
     final api = context.read<ApiService>();
-    showDialog(
+    
+    await showDialog(
       context: context,
       builder: (ctx) {
         return FutureBuilder(
@@ -81,7 +82,8 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
             final email = asString(data['email']);
             final phone = asString(data['phone']);
             final msg = asString(data['message']);
-            final date = asString(data['created_at']).split('T').first;
+            final rawDate = asString(data['created_at']);
+            final date = rawDate.contains('T') ? rawDate.split('T').first : rawDate;
 
             return AlertDialog(
               title: Text('Enquiry from $name'),
@@ -92,8 +94,14 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('Email: $email', style: const TextStyle(fontWeight: FontWeight.w600)),
-                    if (phone.isNotEmpty) Text('Phone: $phone', style: const TextStyle(fontWeight: FontWeight.w600)),
-                    Text('Date: $date', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                    if (phone.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text('Phone: $phone', style: const TextStyle(fontWeight: FontWeight.w600)),
+                    ],
+                    if (date.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text('Date: $date', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                    ],
                     const SizedBox(height: 14),
                     const Divider(),
                     const SizedBox(height: 10),
@@ -111,6 +119,8 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
         );
       },
     );
+
+    _fetchContacts();
   }
 
   Future<void> _deleteEnquiry(num id) async {
@@ -163,13 +173,15 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Visitor Enquiries', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        const Text('Prospective member messages submitted via the public contact form.'),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Visitor Enquiries', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          const Text('Prospective member messages submitted via the public contact form.'),
+                        ],
+                      ),
                     ),
                     IconButton(
                       tooltip: 'Refresh',
@@ -193,38 +205,58 @@ class _AdminContactsPageState extends State<AdminContactsPage> {
                     final status = asString(item['status'], 'NEW');
 
                     return Card(
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: scheme.primary.withValues(alpha: 0.1),
-                          child: Icon(Icons.mail_outline, color: scheme.primary),
-                        ),
-                        title: Row(
-                          children: [
-                            Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                            const SizedBox(width: 8),
-                            StatusBadge(label: status, positive: status == 'NEW'),
-                          ],
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(email, style: TextStyle(color: scheme.primary, fontSize: 12)),
-                            const SizedBox(height: 4),
-                            Text(msg, maxLines: 2, overflow: TextOverflow.ellipsis),
-                          ],
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.visibility_outlined),
-                              onPressed: () => _viewEnquiry(id),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: scheme.primary.withValues(alpha: 0.1),
+                            child: Icon(Icons.mail_outline, color: scheme.primary),
+                          ),
+                          title: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  name,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              StatusBadge(label: status, positive: status == 'NEW'),
+                            ],
+                          ),
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  email,
+                                  style: TextStyle(color: scheme.primary, fontSize: 12),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  msg,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Colors.red),
-                              onPressed: () => _deleteEnquiry(id),
-                            ),
-                          ],
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.visibility_outlined),
+                                onPressed: () => _viewEnquiry(id),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                onPressed: () => _deleteEnquiry(id),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );
