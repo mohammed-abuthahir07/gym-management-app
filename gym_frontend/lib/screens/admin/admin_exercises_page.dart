@@ -37,8 +37,12 @@ class _AdminExercisesPageState extends State<AdminExercisesPage> {
     try {
       final res = await api.get('/api/admin/exercises');
       List<dynamic> list = [];
-      if (res is Map && res['exercises'] is List) {
-        list = res['exercises'];
+      if (res is Map) {
+        if (res['exercises'] is List) {
+          list = res['exercises'];
+        } else if (res['data'] is List) {
+          list = res['data'];
+        }
       } else if (res is List) {
         list = res;
       }
@@ -107,7 +111,7 @@ class _AdminExercisesPageState extends State<AdminExercisesPage> {
                         ),
                         const SizedBox(height: 12),
                         DropdownButtonFormField<String>(
-                          value: difficulty,
+                          value: _difficulties.contains(difficulty) ? difficulty : 'BEGINNER',
                           decoration: const InputDecoration(labelText: 'Difficulty Tier *'),
                           items: _difficulties.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
                           onChanged: (v) => setDialogState(() => difficulty = v ?? 'BEGINNER'),
@@ -154,14 +158,17 @@ class _AdminExercisesPageState extends State<AdminExercisesPage> {
                       };
 
                       if (isEditing) {
-                        await api.put('/api/admin/exercises/${item['id']}', body: body);
+                        final exerciseId = asNum(item['id']);
+                        await api.put('/api/admin/exercises/$exerciseId', body: body);
                       } else {
                         await api.post('/api/admin/exercises', body: body);
                       }
                       if (ctx.mounted) Navigator.pop(ctx);
                       _fetchExercises();
                     } on ApiException catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+                      if (dialogCtx.mounted) {
+                        ScaffoldMessenger.of(dialogCtx).showSnackBar(SnackBar(content: Text(e.message)));
+                      }
                     } finally {
                       if (dialogCtx.mounted) setDialogState(() => saving = false);
                     }
@@ -225,14 +232,20 @@ class _AdminExercisesPageState extends State<AdminExercisesPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Exercise Database Administration', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        const Text('Manage all library movements accessible to trainers and trainees.'),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Exercise Database Administration',
+                            style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text('Manage all library movements accessible to trainers and trainees.'),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 12),
                     AppButton(
                       label: 'Add Exercise',
                       icon: Icons.add,
@@ -254,25 +267,62 @@ class _AdminExercisesPageState extends State<AdminExercisesPage> {
                     final diff = asString(ex['difficulty'], 'BEGINNER');
 
                     return Card(
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: scheme.primary.withValues(alpha: 0.1),
-                          child: Icon(Icons.fitness_center, color: scheme.primary),
-                        ),
-                        title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        subtitle: Text('Muscle: $muscle'),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            StatusBadge(label: diff),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(Icons.edit_outlined),
-                              onPressed: () => _openDialog(ex),
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: scheme.primary.withValues(alpha: 0.1),
+                                  child: Icon(Icons.fitness_center, color: scheme.primary),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        name,
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Muscle Group: $muscle',
+                                        style: TextStyle(color: theme.textTheme.bodySmall?.color),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                StatusBadge(label: diff),
+                              ],
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Colors.red),
-                              onPressed: () => _deleteExercise(id),
+                            const Divider(height: 24),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                OutlinedButton.icon(
+                                  onPressed: () => _openDialog(ex),
+                                  icon: const Icon(Icons.edit_outlined, size: 16),
+                                  label: const Text('Edit'),
+                                  style: OutlinedButton.styleFrom(
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                OutlinedButton.icon(
+                                  onPressed: () => _deleteExercise(id),
+                                  icon: const Icon(Icons.delete_outline, color: Colors.red, size: 16),
+                                  label: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                  style: OutlinedButton.styleFrom(
+                                    visualDensity: VisualDensity.compact,
+                                    side: const BorderSide(color: Colors.redAccent),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
