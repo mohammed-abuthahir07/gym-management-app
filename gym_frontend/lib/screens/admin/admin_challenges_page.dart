@@ -57,6 +57,8 @@ class _AdminChallengesPageState extends State<AdminChallengesPage> {
     final titleCtrl = TextEditingController(text: isEditing ? asString(item['title']) : '');
     final descCtrl = TextEditingController(text: isEditing ? asString(item['description']) : '');
     final rewardCtrl = TextEditingController(text: isEditing ? asString(item['reward']) : 'Free Shaker Cup');
+    String status = isEditing ? asString(item['status'], 'ACTIVE') : 'ACTIVE';
+
     final startCtrl = TextEditingController(
       text: isEditing ? asString(item['start_date']).split('T').first : DateTime.now().toIso8601String().split('T').first,
     );
@@ -83,14 +85,14 @@ class _AdminChallengesPageState extends State<AdminChallengesPage> {
                       children: [
                         TextFormField(
                           controller: titleCtrl,
-                          decoration: const InputDecoration(labelText: 'Challenge Title *'),
+                          decoration: const InputDecoration(labelText: 'Challenge Title *', isDense: true),
                           validator: (v) => Validators.requiredField(v, label: 'Title'),
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: descCtrl,
                           maxLines: 2,
-                          decoration: const InputDecoration(labelText: 'Rules & Target Description'),
+                          decoration: const InputDecoration(labelText: 'Rules & Target Description', isDense: true),
                         ),
                         const SizedBox(height: 12),
                         Row(
@@ -98,7 +100,7 @@ class _AdminChallengesPageState extends State<AdminChallengesPage> {
                             Expanded(
                               child: TextFormField(
                                 controller: startCtrl,
-                                decoration: const InputDecoration(labelText: 'Start Date (YYYY-MM-DD) *'),
+                                decoration: const InputDecoration(labelText: 'Start Date (YYYY-MM-DD) *', isDense: true),
                                 validator: (v) => Validators.requiredField(v, label: 'Start date'),
                               ),
                             ),
@@ -106,7 +108,7 @@ class _AdminChallengesPageState extends State<AdminChallengesPage> {
                             Expanded(
                               child: TextFormField(
                                 controller: endCtrl,
-                                decoration: const InputDecoration(labelText: 'End Date (YYYY-MM-DD) *'),
+                                decoration: const InputDecoration(labelText: 'End Date (YYYY-MM-DD) *', isDense: true),
                                 validator: (v) => Validators.requiredField(v, label: 'End date'),
                               ),
                             ),
@@ -115,9 +117,21 @@ class _AdminChallengesPageState extends State<AdminChallengesPage> {
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: rewardCtrl,
-                          decoration: const InputDecoration(labelText: 'Reward / Prize (e.g. Free T-shirt) *'),
+                          decoration: const InputDecoration(labelText: 'Reward / Prize (e.g. Free T-shirt) *', isDense: true),
                           validator: (v) => Validators.requiredField(v, label: 'Reward'),
                         ),
+                        if (isEditing) ...[
+                          const SizedBox(height: 12),
+                          DropdownButtonFormField<String>(
+                            value: status,
+                            decoration: const InputDecoration(labelText: 'Status *', isDense: true),
+                            items: const [
+                              DropdownMenuItem(value: 'ACTIVE', child: Text('ACTIVE')),
+                              DropdownMenuItem(value: 'INACTIVE', child: Text('INACTIVE')),
+                            ],
+                            onChanged: (v) => setDialogState(() => status = v ?? 'ACTIVE'),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -127,7 +141,7 @@ class _AdminChallengesPageState extends State<AdminChallengesPage> {
                 TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancel')),
                 AppButton(
                   loading: saving,
-                  label: isEditing ? 'Save' : 'Create',
+                  label: isEditing ? 'Save Changes' : 'Create Challenge',
                   onPressed: () async {
                     if (!formKey.currentState!.validate()) return;
                     setDialogState(() => saving = true);
@@ -139,6 +153,7 @@ class _AdminChallengesPageState extends State<AdminChallengesPage> {
                         'start_date': startCtrl.text.trim(),
                         'end_date': endCtrl.text.trim(),
                         'reward': rewardCtrl.text.trim(),
+                        if (isEditing) 'status': status,
                       };
 
                       if (isEditing) {
@@ -213,14 +228,17 @@ class _AdminChallengesPageState extends State<AdminChallengesPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Challenges Administration', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        const Text('Design gym-wide milestones and prize challenges for members.'),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Challenges Administration', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          const Text('Design gym-wide milestones and prize challenges for members.'),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 12),
                     AppButton(
                       label: 'New Challenge',
                       icon: Icons.add,
@@ -241,6 +259,7 @@ class _AdminChallengesPageState extends State<AdminChallengesPage> {
                     final reward = asString(c['reward']);
                     final start = asString(c['start_date']).split('T').first;
                     final end = asString(c['end_date']).split('T').first;
+                    final challengeStatus = asString(c['status'], 'ACTIVE');
 
                     return Card(
                       child: ListTile(
@@ -248,7 +267,15 @@ class _AdminChallengesPageState extends State<AdminChallengesPage> {
                           backgroundColor: scheme.primary.withValues(alpha: 0.1),
                           child: Icon(Icons.military_tech, color: scheme.primary),
                         ),
-                        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        title: Row(
+                          children: [
+                            Expanded(
+                              child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            ),
+                            const SizedBox(width: 8),
+                            StatusBadge(label: challengeStatus),
+                          ],
+                        ),
                         subtitle: Text('Valid: $start to $end • Prize: $reward'),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
