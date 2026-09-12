@@ -62,15 +62,16 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
       final trAn = results[7] is Map ? results[7] as Map : {};
 
       setState(() {
-        _monthRevenue = asNum(mRev['revenue'] ?? mRev['total_revenue'] ?? mRev['data']);
-        _yearRevenue = asNum(yRev['revenue'] ?? yRev['total_revenue'] ?? yRev['data']);
-        _totalRevenue = asNum(tRev['revenue'] ?? tRev['total_revenue'] ?? tRev['data']);
-        _monthCheckins = asNum(mChk['checkins'] ?? mChk['total_checkins'] ?? mChk['data']?['total_checkins'] ?? mChk['data']);
-        _yearCheckins = asNum(yChk['checkins'] ?? yChk['total_checkins'] ?? yChk['data']?['total_checkins'] ?? yChk['data']);
-        _monthUnpaid = asNum(mUnp['unpaid'] ?? mUnp['total_unpaid'] ?? mUnp['data']?['total_unpaid'] ?? mUnp['data']);
+        _monthRevenue = asNum(mRev['revenue'] ?? mRev['total_revenue'] ?? mRev['data']?['revenue'] ?? mRev['data']);
+        _yearRevenue = asNum(yRev['revenue'] ?? yRev['total_revenue'] ?? yRev['data']?['revenue'] ?? yRev['data']);
+        _totalRevenue = asNum(tRev['revenue'] ?? tRev['total_revenue'] ?? tRev['data']?['revenue'] ?? tRev['data']);
+        
+        _monthCheckins = asNum(mChk['checkins'] ?? mChk['total_checkins'] ?? mChk['data']?['total_checkins'] ?? mChk['data']?['checkins'] ?? mChk['data']);
+        _yearCheckins = asNum(yChk['checkins'] ?? yChk['total_checkins'] ?? yChk['data']?['total_checkins'] ?? yChk['data']?['checkins'] ?? yChk['data']);
+        _monthUnpaid = asNum(mUnp['unpaid'] ?? mUnp['total_unpaid'] ?? mUnp['data']?['total_unpaid'] ?? mUnp['data']?['unpaid'] ?? mUnp['data']);
 
-        _joinedMonthMembers = asNum(memAn['data']?['current_month_joined']);
-        _joinedMonthTrainers = asNum(trAn['data']?['current_month_joined']);
+        _joinedMonthMembers = asNum(memAn['data']?['current_month_joined'] ?? memAn['current_month_joined'] ?? memAn['joined']);
+        _joinedMonthTrainers = asNum(trAn['data']?['current_month_joined'] ?? trAn['current_month_joined'] ?? trAn['joined']);
       });
     } on ApiException catch (e) {
       setState(() => _error = e.message);
@@ -107,13 +108,18 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Financial & Attendance Reports', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 4),
-                          const Text('Comprehensive revenue analytics, gym footfall, and monthly dues.'),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Financial & Attendance Reports', 
+                              style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text('Comprehensive revenue analytics, gym footfall, and monthly dues.'),
+                          ],
+                        ),
                       ),
                       IconButton(
                         tooltip: 'Refresh',
@@ -224,11 +230,16 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('New Registrations This Month', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                const Text(
+                                  'New Registrations This Month', 
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
                                 const SizedBox(height: 4),
                                 Text(
                                   '$_joinedMonthMembers new members joined • $_joinedMonthTrainers new trainers onboarded',
                                   style: TextStyle(color: theme.textTheme.bodySmall?.color),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 2,
                                 ),
                               ],
                             ),
