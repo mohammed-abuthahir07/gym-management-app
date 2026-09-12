@@ -59,6 +59,8 @@ class _AdminPromotionsPageState extends State<AdminPromotionsPage> {
     final descCtrl = TextEditingController(text: isEditing ? asString(item['description']) : '');
     final discountCtrl = TextEditingController(text: isEditing ? asString(item['discount']) : '20');
     String discountType = isEditing ? asString(item['discount_type'], 'PERCENTAGE') : 'PERCENTAGE';
+    String status = isEditing ? asString(item['status'], 'ACTIVE') : 'ACTIVE';
+    
     final startCtrl = TextEditingController(
       text: isEditing ? asString(item['start_date']).split('T').first : DateTime.now().toIso8601String().split('T').first,
     );
@@ -85,19 +87,19 @@ class _AdminPromotionsPageState extends State<AdminPromotionsPage> {
                       children: [
                         TextFormField(
                           controller: titleCtrl,
-                          decoration: const InputDecoration(labelText: 'Promotion Title *'),
+                          decoration: const InputDecoration(labelText: 'Promotion Title *', isDense: true),
                           validator: (v) => Validators.requiredField(v, label: 'Title'),
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: codeCtrl,
-                          decoration: const InputDecoration(labelText: 'Promo Code (e.g. FORGE20) *'),
+                          decoration: const InputDecoration(labelText: 'Promo Code (e.g. NY2026) *', isDense: true),
                           validator: (v) => Validators.requiredField(v, label: 'Promo code'),
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: descCtrl,
-                          decoration: const InputDecoration(labelText: 'Description'),
+                          decoration: const InputDecoration(labelText: 'Description', isDense: true),
                         ),
                         const SizedBox(height: 12),
                         Row(
@@ -106,7 +108,7 @@ class _AdminPromotionsPageState extends State<AdminPromotionsPage> {
                               child: TextFormField(
                                 controller: discountCtrl,
                                 keyboardType: TextInputType.number,
-                                decoration: const InputDecoration(labelText: 'Discount Value *'),
+                                decoration: const InputDecoration(labelText: 'Discount Value *', isDense: true),
                                 validator: (v) => Validators.positiveNumber(v, label: 'Discount'),
                               ),
                             ),
@@ -114,10 +116,10 @@ class _AdminPromotionsPageState extends State<AdminPromotionsPage> {
                             Expanded(
                               child: DropdownButtonFormField<String>(
                                 value: discountType,
-                                decoration: const InputDecoration(labelText: 'Type *'),
+                                decoration: const InputDecoration(labelText: 'Type *', isDense: true),
                                 items: const [
-                                  DropdownMenuItem(value: 'PERCENTAGE', child: Text('PERCENTAGE')),
-                                  DropdownMenuItem(value: 'FIXED', child: Text('FIXED (₹)')),
+                                  DropdownMenuItem(value: 'PERCENTAGE', child: Text('Percent', overflow: TextOverflow.ellipsis)),
+                                  DropdownMenuItem(value: 'FIXED', child: Text('Fixed (₹)', overflow: TextOverflow.ellipsis)),
                                 ],
                                 onChanged: (v) => setDialogState(() => discountType = v ?? 'PERCENTAGE'),
                               ),
@@ -130,7 +132,7 @@ class _AdminPromotionsPageState extends State<AdminPromotionsPage> {
                             Expanded(
                               child: TextFormField(
                                 controller: startCtrl,
-                                decoration: const InputDecoration(labelText: 'Start (YYYY-MM-DD) *'),
+                                decoration: const InputDecoration(labelText: 'Start (YYYY-MM-DD) *', isDense: true),
                                 validator: (v) => Validators.requiredField(v, label: 'Start date'),
                               ),
                             ),
@@ -138,12 +140,24 @@ class _AdminPromotionsPageState extends State<AdminPromotionsPage> {
                             Expanded(
                               child: TextFormField(
                                 controller: endCtrl,
-                                decoration: const InputDecoration(labelText: 'End (YYYY-MM-DD) *'),
+                                decoration: const InputDecoration(labelText: 'End (YYYY-MM-DD) *', isDense: true),
                                 validator: (v) => Validators.requiredField(v, label: 'End date'),
                               ),
                             ),
                           ],
                         ),
+                        if (isEditing) ...[
+                          const SizedBox(height: 12),
+                          DropdownButtonFormField<String>(
+                            value: status,
+                            decoration: const InputDecoration(labelText: 'Status *', isDense: true),
+                            items: const [
+                              DropdownMenuItem(value: 'ACTIVE', child: Text('ACTIVE')),
+                              DropdownMenuItem(value: 'INACTIVE', child: Text('INACTIVE')),
+                            ],
+                            onChanged: (v) => setDialogState(() => status = v ?? 'ACTIVE'),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -167,6 +181,7 @@ class _AdminPromotionsPageState extends State<AdminPromotionsPage> {
                         'discount_type': discountType,
                         'start_date': startCtrl.text.trim(),
                         'end_date': endCtrl.text.trim(),
+                        if (isEditing) 'status': status,
                       };
 
                       if (isEditing) {
@@ -241,14 +256,17 @@ class _AdminPromotionsPageState extends State<AdminPromotionsPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Promotions & Discounts Administration', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        const Text('Manage limited-time membership discount campaigns and coupon codes.'),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Promotions & Discounts Administration', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          const Text('Manage limited-time membership discount campaigns and coupon codes.'),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 12),
                     AppButton(
                       label: 'Create Promo',
                       icon: Icons.add,
@@ -281,7 +299,9 @@ class _AdminPromotionsPageState extends State<AdminPromotionsPage> {
                         ),
                         title: Row(
                           children: [
-                            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            Expanded(
+                              child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            ),
                             const SizedBox(width: 8),
                             StatusBadge(label: label),
                           ],
