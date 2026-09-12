@@ -3,24 +3,67 @@ const path = require('path');
 
 const contentModel = require('../model/adminContentModel');
 
+// ======================================================
+// HELPER - DELETE FILE SAFELY
+// ======================================================
 
-// ========================================
+const deleteFileIfExists = (filePath) => {
+    if (!filePath) return;
+
+    try {
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+    } catch (error) {
+        console.error('Failed to delete file:', error);
+    }
+};
+
+// ======================================================
+// HELPER - GET UPLOADED IMAGE PATH
+// ======================================================
+
+const getUploadedImagePath = (filename) => {
+    return path.join(
+        __dirname,
+        '../../uploads/content',
+        filename
+    );
+};
+
+// ======================================================
+// HELPER - GET OLD IMAGE PATH FROM DB VALUE
+// ======================================================
+
+const getOldImagePath = (image) => {
+    if (!image) return null;
+
+    const filename = path.basename(image);
+
+    return getUploadedImagePath(filename);
+};
+
+// ======================================================
 // CREATE CONTENT
-// ========================================
+// ======================================================
 
 const createContent = async (req, res) => {
     try {
+        const title = req.body?.title;
+        const description = req.body?.description;
 
-        const {
-            title,
-            description
-        } = req.body;
+        // ------------------------------------------
+        // Validate title and description
+        // ------------------------------------------
 
-        if (!title || !description) {
-
-            // Delete uploaded image if validation fails
+        if (
+            typeof title !== 'string' ||
+            !title.trim() ||
+            typeof description !== 'string' ||
+            !description.trim()
+        ) {
             if (req.file) {
-                fs.unlinkSync(req.file.path);
+                deleteFileIfExists(req.file.path);
             }
 
             return res.status(400).json({
@@ -29,6 +72,9 @@ const createContent = async (req, res) => {
             });
         }
 
+        // ------------------------------------------
+        // Validate image
+        // ------------------------------------------
 
         if (!req.file) {
             return res.status(400).json({
@@ -37,39 +83,38 @@ const createContent = async (req, res) => {
             });
         }
 
+        const cleanTitle = title.trim();
+        const cleanDescription = description.trim();
 
         const image = `/uploads/content/${req.file.filename}`;
 
+        // ------------------------------------------
+        // Insert into database
+        // ------------------------------------------
 
         const result = await contentModel.createContent({
-            title: title.trim(),
+            title: cleanTitle,
             image,
-            description: description.trim()
+            description: cleanDescription
         });
-
 
         return res.status(201).json({
             success: true,
             message: 'Content created successfully',
             data: {
                 id: result.insertId,
-                title: title.trim(),
+                title: cleanTitle,
                 image,
-                description: description.trim()
+                description: cleanDescription
             }
         });
 
     } catch (error) {
-
         console.error('Create content error:', error);
 
-        // Remove uploaded image if database operation fails
+        // Delete uploaded file if DB operation fails
         if (req.file) {
-            try {
-                fs.unlinkSync(req.file.path);
-            } catch (fileError) {
-                console.error('Failed to remove uploaded image:', fileError);
-            }
+            deleteFileIfExists(req.file.path);
         }
 
         return res.status(500).json({
@@ -79,14 +124,12 @@ const createContent = async (req, res) => {
     }
 };
 
-
-// ========================================
+// ======================================================
 // GET ALL CONTENT
-// ========================================
+// ======================================================
 
 const getAllContent = async (req, res) => {
     try {
-
         const content = await contentModel.getAllContent();
 
         return res.status(200).json({
@@ -95,7 +138,6 @@ const getAllContent = async (req, res) => {
         });
 
     } catch (error) {
-
         console.error('Get all content error:', error);
 
         return res.status(500).json({
@@ -105,14 +147,12 @@ const getAllContent = async (req, res) => {
     }
 };
 
-
-// ========================================
+// ======================================================
 // GET CONTENT BY ID
-// ========================================
+// ======================================================
 
 const getContentById = async (req, res) => {
     try {
-
         const { id } = req.params;
 
         const content = await contentModel.getContentById(id);
@@ -130,7 +170,6 @@ const getContentById = async (req, res) => {
         });
 
     } catch (error) {
-
         console.error('Get content by ID error:', error);
 
         return res.status(500).json({
@@ -140,26 +179,29 @@ const getContentById = async (req, res) => {
     }
 };
 
-
-// ========================================
+// ======================================================
 // UPDATE CONTENT
-// ========================================
+// ======================================================
 
 const updateContent = async (req, res) => {
     try {
-
         const { id } = req.params;
 
-        const {
-            title,
-            description
-        } = req.body;
+        const title = req.body?.title;
+        const description = req.body?.description;
 
+        // ------------------------------------------
+        // Validate fields
+        // ------------------------------------------
 
-        if (!title || !description) {
-
+        if (
+            typeof title !== 'string' ||
+            !title.trim() ||
+            typeof description !== 'string' ||
+            !description.trim()
+        ) {
             if (req.file) {
-                fs.unlinkSync(req.file.path);
+                deleteFileIfExists(req.file.path);
             }
 
             return res.status(400).json({
@@ -168,13 +210,16 @@ const updateContent = async (req, res) => {
             });
         }
 
+        // ------------------------------------------
+        // Find existing content
+        // ------------------------------------------
 
-        const existingContent = await contentModel.getContentById(id);
+        const existingContent =
+            await contentModel.getContentById(id);
 
         if (!existingContent) {
-
             if (req.file) {
-                fs.unlinkSync(req.file.path);
+                deleteFileIfExists(req.file.path);
             }
 
             return res.status(404).json({
@@ -183,34 +228,49 @@ const updateContent = async (req, res) => {
             });
         }
 
+        const cleanTitle = title.trim();
+        const cleanDescription = description.trim();
 
-        // If Admin uploads a new image
+        // ------------------------------------------
+        // Keep old image by default
+        // ------------------------------------------
+
         let image = existingContent.image;
 
-        if (req.file) {
+        // ------------------------------------------
+        // If new image uploaded
+        // ------------------------------------------
 
+        if (req.file) {
             image = `/uploads/content/${req.file.filename}`;
 
+            const oldImagePath =
+                getOldImagePath(existingContent.image);
 
-            // Delete old image
-            const oldImagePath = path.join(
-                __dirname,
-                '../../',
-                existingContent.image
-            );
+            // Update database first
+            await contentModel.updateContent(id, {
+                title: cleanTitle,
+                image,
+                description: cleanDescription
+            });
 
-            if (fs.existsSync(oldImagePath)) {
-                fs.unlinkSync(oldImagePath);
+            // Delete old image AFTER successful DB update
+            if (oldImagePath) {
+                deleteFileIfExists(oldImagePath);
             }
+
+        } else {
+            // --------------------------------------
+            // No new image
+            // Keep existing image
+            // --------------------------------------
+
+            await contentModel.updateContent(id, {
+                title: cleanTitle,
+                image,
+                description: cleanDescription
+            });
         }
-
-
-        await contentModel.updateContent(id, {
-            title: title.trim(),
-            image,
-            description: description.trim()
-        });
-
 
         return res.status(200).json({
             success: true,
@@ -218,15 +278,11 @@ const updateContent = async (req, res) => {
         });
 
     } catch (error) {
-
         console.error('Update content error:', error);
 
+        // If new image was uploaded but update failed
         if (req.file) {
-            try {
-                fs.unlinkSync(req.file.path);
-            } catch (fileError) {
-                console.error('Failed to remove uploaded image:', fileError);
-            }
+            deleteFileIfExists(req.file.path);
         }
 
         return res.status(500).json({
@@ -236,17 +292,20 @@ const updateContent = async (req, res) => {
     }
 };
 
-
-// ========================================
-// DELETE CONTENT
-// ========================================
+// ======================================================
+// DELETE CONTENT - PERMANENT DELETE
+// ======================================================
 
 const deleteContent = async (req, res) => {
     try {
-
         const { id } = req.params;
 
-        const existingContent = await contentModel.getContentById(id);
+        // ------------------------------------------
+        // Find existing content
+        // ------------------------------------------
+
+        const existingContent =
+            await contentModel.getContentById(id);
 
         if (!existingContent) {
             return res.status(404).json({
@@ -255,9 +314,12 @@ const deleteContent = async (req, res) => {
             });
         }
 
+        // ------------------------------------------
+        // Delete database record
+        // ------------------------------------------
 
-        const result = await contentModel.deleteContent(id);
-
+        const result =
+            await contentModel.deleteContent(id);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({
@@ -266,21 +328,16 @@ const deleteContent = async (req, res) => {
             });
         }
 
+        // ------------------------------------------
+        // Delete physical image
+        // ------------------------------------------
 
-        // Delete image from server
         if (existingContent.image) {
+            const imagePath =
+                getOldImagePath(existingContent.image);
 
-            const imagePath = path.join(
-                __dirname,
-                '../../',
-                existingContent.image
-            );
-
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
-            }
+            deleteFileIfExists(imagePath);
         }
-
 
         return res.status(200).json({
             success: true,
@@ -288,7 +345,6 @@ const deleteContent = async (req, res) => {
         });
 
     } catch (error) {
-
         console.error('Delete content error:', error);
 
         return res.status(500).json({
@@ -297,7 +353,6 @@ const deleteContent = async (req, res) => {
         });
     }
 };
-
 
 module.exports = {
     createContent,
