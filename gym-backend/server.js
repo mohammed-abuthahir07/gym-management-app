@@ -44,6 +44,7 @@ const publicPlansRoutes = require('./public/routes/publicPlansRoutes');
 const publicPromotionRoutes = require('./public/routes/publicPromotionRoutes');
 const publicContentRoutes = require('./public/routes/publicContentRoutes');
 const publicTrainerRoutes = require('./public/routes/publicTrainerRoutes');
+const adminProfileRoutes = require('./admin/routes/profileRoutes');
 
 const app = express();
 
@@ -103,6 +104,7 @@ app.use('/api/admin/content', adminContentRoutes);
 app.use('/api/admin/analytics', adminAnalyticsRoutes);
 app.use('/api/admin', adminFeeRoutes);
 app.use('/api/admin', adminReportRoutes);
+app.use( '/api/admin/profile',adminProfileRoutes);
 
 const PORT = process.env.PORT || 5000;
 
