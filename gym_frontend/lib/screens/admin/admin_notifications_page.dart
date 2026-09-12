@@ -42,8 +42,8 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
       ]);
 
       final notifRes = results[0];
-      final memRes = results[1] as Map<String, dynamic>;
-      final trRes = results[2] as Map<String, dynamic>;
+      final memRes = results[1] is Map ? results[1] as Map<String, dynamic> : <String, dynamic>{};
+      final trRes = results[2] is Map ? results[2] as Map<String, dynamic> : <String, dynamic>{};
 
       List<dynamic> notifList = [];
       if (notifRes is Map && notifRes['notifications'] is List) {
@@ -66,11 +66,13 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
     }
   }
 
-  Future<void> _openSendDialog() async {
+  Future<void> _openSendDialog([Map<String, dynamic>? item]) async {
+    final isEditing = item != null;
     String targetType = 'ALL_MEMBERS';
     num? specificId;
-    final titleCtrl = TextEditingController(text: 'Gym Announcement');
-    final msgCtrl = TextEditingController();
+    
+    final titleCtrl = TextEditingController(text: isEditing ? asString(item['title']) : 'Gym Announcement');
+    final msgCtrl = TextEditingController(text: isEditing ? asString(item['message']) : '');
     final formKey = GlobalKey<FormState>();
 
     await showDialog(
@@ -80,7 +82,7 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
         return StatefulBuilder(
           builder: (dialogCtx, setDialogState) {
             return AlertDialog(
-              title: const Text('Dispatch Gym Broadcast'),
+              title: Text(isEditing ? 'Edit Notification' : 'Dispatch Gym Broadcast'),
               content: SizedBox(
                 width: 460,
                 child: Form(
@@ -89,59 +91,67 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        DropdownButtonFormField<String>(
-                          value: targetType,
-                          decoration: const InputDecoration(labelText: 'Target Audience *'),
-                          items: const [
-                            DropdownMenuItem(value: 'ALL_MEMBERS', child: Text('All Members Broadcast')),
-                            DropdownMenuItem(value: 'ALL_TRAINERS', child: Text('All Trainers Broadcast')),
-                            DropdownMenuItem(value: 'SPECIFIC_MEMBER', child: Text('Specific Member')),
-                            DropdownMenuItem(value: 'SPECIFIC_TRAINER', child: Text('Specific Trainer')),
+                        if (!isEditing) ...[
+                          DropdownButtonFormField<String>(
+                            value: targetType,
+                            decoration: const InputDecoration(labelText: 'Target Audience *', isDense: true),
+                            items: const [
+                              DropdownMenuItem(value: 'ALL_MEMBERS', child: Text('All Members Broadcast')),
+                              DropdownMenuItem(value: 'ALL_TRAINERS', child: Text('All Trainers Broadcast')),
+                              DropdownMenuItem(value: 'SPECIFIC_MEMBER', child: Text('Specific Member')),
+                              DropdownMenuItem(value: 'SPECIFIC_TRAINER', child: Text('Specific Trainer')),
+                            ],
+                            onChanged: (v) {
+                              setDialogState(() {
+                                targetType = v ?? 'ALL_MEMBERS';
+                                specificId = null;
+                                if (targetType == 'SPECIFIC_MEMBER' && _members.isNotEmpty) {
+                                  specificId = asNum(_members.first['id']);
+                                } else if (targetType == 'SPECIFIC_TRAINER' && _trainers.isNotEmpty) {
+                                  specificId = asNum(_trainers.first['id']);
+                                }
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          if (targetType == 'SPECIFIC_MEMBER') ...[
+                            DropdownButtonFormField<num>(
+                              value: specificId,
+                              decoration: const InputDecoration(labelText: 'Select Member *', isDense: true),
+                              items: _members.map((m) {
+                                return DropdownMenuItem<num>(
+                                  value: asNum(m['id']),
+                                  child: Text(asString(m['name'])),
+                                );
+                              }).toList(),
+                              onChanged: (v) => setDialogState(() => specificId = v),
+                            ),
+                            const SizedBox(height: 12),
+                          ] else if (targetType == 'SPECIFIC_TRAINER') ...[
+                            DropdownButtonFormField<num>(
+                              value: specificId,
+                              decoration: const InputDecoration(labelText: 'Select Trainer *', isDense: true),
+                              items: _trainers.map((t) {
+                                return DropdownMenuItem<num>(
+                                  value: asNum(t['id']),
+                                  child: Text(asString(t['name'])),
+                                );
+                              }).toList(),
+                              onChanged: (v) => setDialogState(() => specificId = v),
+                            ),
+                            const SizedBox(height: 12),
                           ],
-                          onChanged: (v) {
-                            setDialogState(() {
-                              targetType = v ?? 'ALL_MEMBERS';
-                              specificId = null;
-                              if (targetType == 'SPECIFIC_MEMBER' && _members.isNotEmpty) {
-                                specificId = _members.first['id'];
-                              } else if (targetType == 'SPECIFIC_TRAINER' && _trainers.isNotEmpty) {
-                                specificId = _trainers.first['id'];
-                              }
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        if (targetType == 'SPECIFIC_MEMBER') ...[
-                          DropdownButtonFormField<num>(
-                            value: specificId,
-                            decoration: const InputDecoration(labelText: 'Select Member *'),
-                            items: _members.map((m) {
-                              return DropdownMenuItem<num>(value: m['id'], child: Text(asString(m['name'])));
-                            }).toList(),
-                            onChanged: (v) => setDialogState(() => specificId = v),
-                          ),
-                          const SizedBox(height: 12),
-                        ] else if (targetType == 'SPECIFIC_TRAINER') ...[
-                          DropdownButtonFormField<num>(
-                            value: specificId,
-                            decoration: const InputDecoration(labelText: 'Select Trainer *'),
-                            items: _trainers.map((t) {
-                              return DropdownMenuItem<num>(value: t['id'], child: Text(asString(t['name'])));
-                            }).toList(),
-                            onChanged: (v) => setDialogState(() => specificId = v),
-                          ),
-                          const SizedBox(height: 12),
                         ],
                         TextFormField(
                           controller: titleCtrl,
-                          decoration: const InputDecoration(labelText: 'Notice Title *'),
+                          decoration: const InputDecoration(labelText: 'Notice Title *', isDense: true),
                           validator: (v) => Validators.requiredField(v, label: 'Title'),
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: msgCtrl,
                           maxLines: 4,
-                          decoration: const InputDecoration(labelText: 'Notification Message *'),
+                          decoration: const InputDecoration(labelText: 'Notification Message *', isDense: true),
                           validator: (v) => Validators.requiredField(v, label: 'Message'),
                         ),
                       ],
@@ -153,7 +163,7 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
                 TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancel')),
                 AppButton(
                   loading: sending,
-                  label: 'Send Notification',
+                  label: isEditing ? 'Save Changes' : 'Send Notification',
                   onPressed: () async {
                     if (!formKey.currentState!.validate()) return;
                     setDialogState(() => sending = true);
@@ -165,15 +175,23 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
                     };
 
                     try {
-                      switch (targetType) {
-                        case 'ALL_MEMBERS':
-                          await api.post('/api/admin/notifications/members', body: body);
-                        case 'ALL_TRAINERS':
-                          await api.post('/api/admin/notifications/trainers', body: body);
-                        case 'SPECIFIC_MEMBER':
-                          await api.post('/api/admin/notifications/member/$specificId', body: body);
-                        case 'SPECIFIC_TRAINER':
-                          await api.post('/api/admin/notifications/trainer/$specificId', body: body);
+                      if (isEditing) {
+                        await api.put('/api/admin/notifications/${item['id']}', body: body);
+                      } else {
+                        switch (targetType) {
+                          case 'ALL_MEMBERS':
+                            await api.post('/api/admin/notifications/members', body: body);
+                            break;
+                          case 'ALL_TRAINERS':
+                            await api.post('/api/admin/notifications/trainers', body: body);
+                            break;
+                          case 'SPECIFIC_MEMBER':
+                            await api.post('/api/admin/notifications/member/$specificId', body: body);
+                            break;
+                          case 'SPECIFIC_TRAINER':
+                            await api.post('/api/admin/notifications/trainer/$specificId', body: body);
+                            break;
+                        }
                       }
                       if (ctx.mounted) Navigator.pop(ctx);
                       _loadAll();
@@ -190,6 +208,34 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
         );
       },
     );
+  }
+
+  Future<void> _deleteNotification(num id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Notification'),
+        content: const Text('Are you sure you want to permanently delete this notification?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      final api = context.read<ApiService>();
+      await api.delete('/api/admin/notifications/$id');
+      _loadAll();
+    } on ApiException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    }
   }
 
   @override
@@ -215,18 +261,21 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Notification Broadcasts', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        const Text('Send announcements to all members, coaches, or individual accounts.'),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Notification Broadcasts', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          const Text('Send announcements to all members, coaches, or individual accounts.'),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 12),
                     AppButton(
                       label: 'Send Notice',
                       icon: Icons.send_outlined,
-                      onPressed: _openSendDialog,
+                      onPressed: () => _openSendDialog(),
                     ),
                   ],
                 ),
@@ -238,10 +287,12 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, idx) {
                     final item = _notifications[idx];
+                    final id = asNum(item['id']);
                     final title = asString(item['title'], 'Notice');
                     final msg = asString(item['message']);
                     final role = asString(item['recipient_role'], 'ALL');
-                    final date = asString(item['created_at']).split('T').first;
+                    final rawDate = asString(item['created_at']);
+                    final date = rawDate.isNotEmpty ? rawDate.split('T').first : '';
 
                     return Card(
                       child: ListTile(
@@ -251,7 +302,9 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
                         ),
                         title: Row(
                           children: [
-                            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            Expanded(
+                              child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            ),
                             const SizedBox(width: 8),
                             StatusBadge(label: role),
                           ],
@@ -261,8 +314,23 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
                           children: [
                             const SizedBox(height: 4),
                             Text(msg),
-                            const SizedBox(height: 4),
-                            Text(date, style: TextStyle(fontSize: 11, color: theme.textTheme.bodySmall?.color)),
+                            if (date.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(date, style: TextStyle(fontSize: 11, color: theme.textTheme.bodySmall?.color)),
+                            ],
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined),
+                              onPressed: () => _openSendDialog(item),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Colors.red),
+                              onPressed: () => _deleteNotification(id),
+                            ),
                           ],
                         ),
                       ),

@@ -1,7 +1,10 @@
 const db = require('../../config/db');
 
 
-// Get all members
+// ======================================================
+// GET ALL MEMBERS
+// ======================================================
+
 const getAllMembers = async () => {
     const [rows] = await db.query(
         `SELECT id
@@ -13,7 +16,10 @@ const getAllMembers = async () => {
 };
 
 
-// Get all trainers
+// ======================================================
+// GET ALL TRAINERS
+// ======================================================
+
 const getAllTrainers = async () => {
     const [rows] = await db.query(
         `SELECT id
@@ -25,33 +31,52 @@ const getAllTrainers = async () => {
 };
 
 
-// Check member
+// ======================================================
+// GET MEMBER BY ID
+// ======================================================
+
 const getMemberById = async (id) => {
     const [rows] = await db.query(
-        `SELECT id, name, email
+        `SELECT
+            id,
+            name,
+            email
          FROM users
-         WHERE id = ? AND role = 'MEMBER'`,
+         WHERE id = ?
+           AND role = 'MEMBER'
+         LIMIT 1`,
         [id]
     );
 
-    return rows[0];
+    return rows[0] || null;
 };
 
 
-// Check trainer
+// ======================================================
+// GET TRAINER BY ID
+// ======================================================
+
 const getTrainerById = async (id) => {
     const [rows] = await db.query(
-        `SELECT id, name, email
+        `SELECT
+            id,
+            name,
+            email
          FROM users
-         WHERE id = ? AND role = 'TRAINER'`,
+         WHERE id = ?
+           AND role = 'TRAINER'
+         LIMIT 1`,
         [id]
     );
 
-    return rows[0];
+    return rows[0] || null;
 };
 
 
-// Create notification for one user
+// ======================================================
+// CREATE NOTIFICATION FOR ONE USER
+// ======================================================
+
 const createNotification = async (
     recipientId,
     recipientRole,
@@ -60,7 +85,12 @@ const createNotification = async (
 ) => {
     const [result] = await db.query(
         `INSERT INTO notifications
-        (recipient_id, recipient_role, title, message)
+        (
+            recipient_id,
+            recipient_role,
+            title,
+            message
+        )
         VALUES (?, ?, ?, ?)`,
         [
             recipientId,
@@ -74,7 +104,10 @@ const createNotification = async (
 };
 
 
-// Create notifications for multiple users
+// ======================================================
+// CREATE NOTIFICATIONS FOR MULTIPLE USERS
+// ======================================================
+
 const createBulkNotifications = async (
     recipients,
     recipientRole,
@@ -86,7 +119,7 @@ const createBulkNotifications = async (
         return 0;
     }
 
-    const values = recipients.map(user => [
+    const values = recipients.map((user) => [
         user.id,
         recipientRole,
         title,
@@ -95,7 +128,12 @@ const createBulkNotifications = async (
 
     await db.query(
         `INSERT INTO notifications
-        (recipient_id, recipient_role, title, message)
+        (
+            recipient_id,
+            recipient_role,
+            title,
+            message
+        )
         VALUES ?`,
         [values]
     );
@@ -104,7 +142,10 @@ const createBulkNotifications = async (
 };
 
 
-// Get notification history for Admin
+// ======================================================
+// GET ALL NOTIFICATIONS
+// ======================================================
+
 const getAllNotifications = async () => {
     const [rows] = await db.query(
         `SELECT
@@ -124,6 +165,79 @@ const getAllNotifications = async () => {
 };
 
 
+// ======================================================
+// GET SINGLE NOTIFICATION
+// ======================================================
+
+const getNotificationById = async (id) => {
+    const [rows] = await db.query(
+        `SELECT
+            id,
+            recipient_id,
+            recipient_role,
+            title,
+            message,
+            is_read,
+            created_at,
+            updated_at
+         FROM notifications
+         WHERE id = ?
+         LIMIT 1`,
+        [id]
+    );
+
+    return rows[0] || null;
+};
+
+
+// ======================================================
+// UPDATE NOTIFICATION
+// ======================================================
+
+const updateNotification = async ({
+    id,
+    title,
+    message,
+    is_read
+}) => {
+    const [result] = await db.query(
+        `UPDATE notifications
+         SET
+            title = ?,
+            message = ?,
+            is_read = ?
+         WHERE id = ?`,
+        [
+            title,
+            message,
+            is_read,
+            id
+        ]
+    );
+
+    return result;
+};
+
+
+// ======================================================
+// DELETE NOTIFICATION PERMANENTLY
+// ======================================================
+
+const deleteNotification = async (id) => {
+    const [result] = await db.query(
+        `DELETE FROM notifications
+         WHERE id = ?`,
+        [id]
+    );
+
+    return result;
+};
+
+
+// ======================================================
+// EXPORT
+// ======================================================
+
 module.exports = {
     getAllMembers,
     getAllTrainers,
@@ -131,5 +245,8 @@ module.exports = {
     getTrainerById,
     createNotification,
     createBulkNotifications,
-    getAllNotifications
+    getAllNotifications,
+    getNotificationById,
+    updateNotification,
+    deleteNotification
 };
