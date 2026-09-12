@@ -1,5 +1,10 @@
 const pool = require('../../config/db');
 
+
+// ======================================================
+// CREATE PLAN
+// ======================================================
+
 const createPlan = async ({
     name,
     description = null,
@@ -34,6 +39,11 @@ const createPlan = async ({
     return result.insertId;
 };
 
+
+// ======================================================
+// FIND PLAN BY ID
+// ======================================================
+
 const findPlanById = async (id) => {
     const [rows] = await pool.execute(
         `SELECT
@@ -56,6 +66,11 @@ const findPlanById = async (id) => {
     return rows[0] || null;
 };
 
+
+// ======================================================
+// FIND PLAN BY NAME
+// ======================================================
+
 const findPlanByName = async (name) => {
     const [rows] = await pool.execute(
         `SELECT
@@ -70,6 +85,32 @@ const findPlanByName = async (name) => {
 
     return rows[0] || null;
 };
+
+
+// ======================================================
+// FIND PLAN BY NAME EXCEPT CURRENT ID
+// ======================================================
+
+const findPlanByNameExceptId = async (name, id) => {
+    const [rows] = await pool.execute(
+        `SELECT
+            id,
+            name,
+            status
+         FROM plans
+         WHERE name = ?
+           AND id != ?
+         LIMIT 1`,
+        [name, id]
+    );
+
+    return rows[0] || null;
+};
+
+
+// ======================================================
+// GET ALL PLANS
+// ======================================================
 
 const getAllPlans = async () => {
     const [rows] = await pool.execute(
@@ -91,9 +132,69 @@ const getAllPlans = async () => {
     return rows;
 };
 
+
+// ======================================================
+// UPDATE PLAN
+// ======================================================
+
+const updatePlan = async ({
+    id,
+    name,
+    description,
+    duration_value,
+    duration_unit,
+    price,
+    extra_features,
+    status
+}) => {
+    const [result] = await pool.execute(
+        `UPDATE plans
+         SET
+            name = ?,
+            description = ?,
+            duration_value = ?,
+            duration_unit = ?,
+            price = ?,
+            extra_features = ?,
+            status = ?
+         WHERE id = ?`,
+        [
+            name,
+            description,
+            duration_value,
+            duration_unit,
+            price,
+            extra_features,
+            status,
+            id
+        ]
+    );
+
+    return result;
+};
+
+
+// ======================================================
+// DELETE PLAN - PERMANENT DELETE
+// ======================================================
+
+const deletePlan = async (id) => {
+    const [result] = await pool.execute(
+        `DELETE FROM plans
+         WHERE id = ?`,
+        [id]
+    );
+
+    return result;
+};
+
+
 module.exports = {
     createPlan,
     findPlanById,
     findPlanByName,
-    getAllPlans
+    findPlanByNameExceptId,
+    getAllPlans,
+    updatePlan,
+    deletePlan
 };
