@@ -4,17 +4,17 @@ import 'package:provider/provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/json_helpers.dart';
 import '../../utils/responsive.dart';
-import '../../utils/validators.dart';
-import '../../widgets/common/app_widgets.dart';
 
 class AdminTrainersPage extends StatefulWidget {
   const AdminTrainersPage({super.key});
 
   @override
-  State<AdminTrainersPage> createState() => _AdminTrainersPageState();
+  State<AdminTrainersPage> createState() =>
+      _AdminTrainersPageState();
 }
 
-class _AdminTrainersPageState extends State<AdminTrainersPage> {
+class _AdminTrainersPageState
+    extends State<AdminTrainersPage> {
   bool _loading = true;
   String? _error;
 
@@ -28,7 +28,9 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
 
   // ============================================================
   // GET ALL TRAINERS
+  //
   // GET /api/admin/trainers
+  // Auth: ADMIN JWT
   // ============================================================
 
   Future<void> _fetchTrainers() async {
@@ -62,10 +64,14 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
         trainersList = response;
       }
 
+      final parsedTrainers =
+          asMapList(trainersList);
+
       if (!mounted) return;
 
       setState(() {
-        _trainers = asMapList(trainersList);
+        _trainers = parsedTrainers;
+        _error = null;
       });
     } on ApiException catch (e) {
       debugPrint(
@@ -85,7 +91,8 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
       if (!mounted) return;
 
       setState(() {
-        _error = 'Failed to load trainer staff directory.';
+        _error =
+            'Failed to load trainers.';
       });
     } finally {
       if (!mounted) return;
@@ -98,18 +105,35 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
 
   // ============================================================
   // CREATE TRAINER
+  //
   // POST /api/admin/trainers
+  //
+  // Body:
+  // {
+  //   "name": "...",
+  //   "email": "...",
+  //   "phone": "...",
+  //   "password": "..."
+  // }
   // ============================================================
 
   Future<void> _openCreateTrainerDialog() async {
-    final nameController = TextEditingController();
-    final emailController = TextEditingController();
-    final phoneController = TextEditingController();
-    final passwordController = TextEditingController();
+    final nameController =
+        TextEditingController();
 
-    final formKey = GlobalKey<FormState>();
+    final emailController =
+        TextEditingController();
 
-    bool trainerCreated = false;
+    final phoneController =
+        TextEditingController();
+
+    final passwordController =
+        TextEditingController();
+
+    final formKey =
+        GlobalKey<FormState>();
+
+    bool created = false;
 
     try {
       await showDialog<void>(
@@ -121,63 +145,75 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
 
           return StatefulBuilder(
             builder: (
-              dialogContext,
+              context,
               setDialogState,
             ) {
               return AlertDialog(
-                title: Row(
-                  children: [
-                    Icon(
-                      Icons.person_add_alt_1_outlined,
-                      color: Theme.of(dialogContext)
-                          .colorScheme
-                          .primary,
-                    ),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Text(
-                        'Add Trainer',
-                      ),
-                    ),
-                  ],
+                title: const Text(
+                  'Add Trainer',
                 ),
+
                 content: SizedBox(
                   width: 440,
                   child: Form(
                     key: formKey,
-                    child: SingleChildScrollView(
+                    child:
+                        SingleChildScrollView(
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisSize:
+                            MainAxisSize.min,
                         children: [
+                          // ==================================================
+                          // NAME
+                          // ==================================================
+
                           TextFormField(
-                            controller: nameController,
+                            controller:
+                                nameController,
                             enabled: !saving,
                             textInputAction:
                                 TextInputAction.next,
                             decoration:
                                 const InputDecoration(
-                              labelText: 'Trainer Name *',
+                              labelText:
+                                  'Trainer Name *',
                               hintText:
                                   'Enter trainer name',
-                              prefixIcon: Icon(
-                                Icons.person_outline,
+                              prefixIcon:
+                                  Icon(
+                                Icons
+                                    .person_outline,
                               ),
                             ),
-                            validator: (value) {
-                              return Validators.requiredField(
-                                value,
-                                label: 'Name',
-                              );
+                            validator:
+                                (value) {
+                              final text =
+                                  value?.trim() ??
+                                      '';
+
+                              if (text.isEmpty) {
+                                return 'Name is required';
+                              }
+
+                              return null;
                             },
                           ),
 
-                          const SizedBox(height: 14),
+                          const SizedBox(
+                            height: 14,
+                          ),
+
+                          // ==================================================
+                          // EMAIL
+                          // ==================================================
 
                           TextFormField(
-                            controller: emailController,
+                            controller:
+                                emailController,
                             enabled: !saving,
                             keyboardType:
-                                TextInputType.emailAddress,
+                                TextInputType
+                                    .emailAddress,
                             textInputAction:
                                 TextInputAction.next,
                             decoration:
@@ -186,18 +222,48 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
                                   'Email Address *',
                               hintText:
                                   'trainer@example.com',
-                              prefixIcon: Icon(
-                                Icons.email_outlined,
+                              prefixIcon:
+                                  Icon(
+                                Icons
+                                    .email_outlined,
                               ),
                             ),
                             validator:
-                                Validators.email,
+                                (value) {
+                              final email =
+                                  value?.trim() ??
+                                      '';
+
+                              if (email.isEmpty) {
+                                return 'Email is required';
+                              }
+
+                              final emailRegex =
+                                  RegExp(
+                                r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
+                              );
+
+                              if (!emailRegex
+                                  .hasMatch(
+                                      email)) {
+                                return 'Enter a valid email';
+                              }
+
+                              return null;
+                            },
                           ),
 
-                          const SizedBox(height: 14),
+                          const SizedBox(
+                            height: 14,
+                          ),
+
+                          // ==================================================
+                          // PHONE
+                          // ==================================================
 
                           TextFormField(
-                            controller: phoneController,
+                            controller:
+                                phoneController,
                             enabled: !saving,
                             keyboardType:
                                 TextInputType.phone,
@@ -209,13 +275,21 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
                                   'Phone Number',
                               hintText:
                                   'Enter phone number',
-                              prefixIcon: Icon(
-                                Icons.phone_outlined,
+                              prefixIcon:
+                                  Icon(
+                                Icons
+                                    .phone_outlined,
                               ),
                             ),
                           ),
 
-                          const SizedBox(height: 14),
+                          const SizedBox(
+                            height: 14,
+                          ),
+
+                          // ==================================================
+                          // PASSWORD
+                          // ==================================================
 
                           TextFormField(
                             controller:
@@ -228,11 +302,13 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
                             decoration:
                                 InputDecoration(
                               labelText:
-                                  'Account Password *',
+                                  'Password *',
                               hintText:
                                   'Enter trainer password',
-                              prefixIcon: const Icon(
-                                Icons.lock_outline,
+                              prefixIcon:
+                                  const Icon(
+                                Icons
+                                    .lock_outline,
                               ),
                               suffixIcon:
                                   IconButton(
@@ -240,17 +316,19 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
                                     obscurePassword
                                         ? 'Show password'
                                         : 'Hide password',
-                                onPressed: saving
-                                    ? null
-                                    : () {
-                                        setDialogState(
-                                          () {
-                                            obscurePassword =
-                                                !obscurePassword;
+                                onPressed:
+                                    saving
+                                        ? null
+                                        : () {
+                                            setDialogState(
+                                              () {
+                                                obscurePassword =
+                                                    !obscurePassword;
+                                              },
+                                            );
                                           },
-                                        );
-                                      },
-                                icon: Icon(
+                                icon:
+                                    Icon(
                                   obscurePassword
                                       ? Icons
                                           .visibility_outlined
@@ -260,13 +338,30 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
                               ),
                             ),
                             validator:
-                                Validators.password,
+                                (value) {
+                              final password =
+                                  value ?? '';
+
+                              if (password
+                                  .trim()
+                                  .isEmpty) {
+                                return 'Password is required';
+                              }
+
+                              if (password.length <
+                                  6) {
+                                return 'Password must be at least 6 characters';
+                              }
+
+                              return null;
+                            },
                           ),
                         ],
                       ),
                     ),
                   ),
                 ),
+
                 actions: [
                   TextButton(
                     onPressed: saving
@@ -276,19 +371,16 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
                               dialogContext,
                             ).pop();
                           },
-                    child: const Text(
-                      'Cancel',
-                    ),
+                    child:
+                        const Text('Cancel'),
                   ),
 
-                  AppButton(
-                    label: 'Create Account',
-                    icon: Icons.person_add_outlined,
-                    loading: saving,
+                  FilledButton.icon(
                     onPressed: saving
                         ? null
                         : () async {
-                            if (!formKey.currentState!
+                            if (!formKey
+                                .currentState!
                                 .validate()) {
                               return;
                             }
@@ -299,34 +391,42 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
 
                             try {
                               final api =
-                                  context.read<ApiService>();
+                                  context.read<
+                                      ApiService>();
+
+                              final body =
+                                  <String, dynamic>{
+                                'name':
+                                    nameController
+                                        .text
+                                        .trim(),
+                                'email':
+                                    emailController
+                                        .text
+                                        .trim(),
+                                'phone':
+                                    phoneController
+                                        .text
+                                        .trim(),
+                                'password':
+                                    passwordController
+                                        .text,
+                              };
 
                               final response =
                                   await api.post(
                                 '/api/admin/trainers',
-                                body: {
-                                  'name':
-                                      nameController.text
-                                          .trim(),
-                                  'email':
-                                      emailController.text
-                                          .trim(),
-                                  'phone':
-                                      phoneController.text
-                                          .trim(),
-                                  'password':
-                                      passwordController
-                                          .text,
-                                },
+                                body: body,
                               );
 
                               debugPrint(
                                 'CREATE TRAINER RESPONSE: $response',
                               );
 
-                              trainerCreated = true;
+                              created = true;
 
-                              if (dialogContext.mounted) {
+                              if (dialogContext
+                                  .mounted) {
                                 Navigator.of(
                                   dialogContext,
                                 ).pop();
@@ -336,7 +436,8 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
                                 'CREATE TRAINER API ERROR: ${e.message}',
                               );
 
-                              if (!dialogContext.mounted) {
+                              if (!dialogContext
+                                  .mounted) {
                                 return;
                               }
 
@@ -344,11 +445,12 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
                                 saving = false;
                               });
 
-                              ScaffoldMessenger.of(
-                                context,
-                              ).showSnackBar(
+                              ScaffoldMessenger
+                                  .of(context)
+                                  .showSnackBar(
                                 SnackBar(
-                                  content: Text(
+                                  content:
+                                      Text(
                                     e.message,
                                   ),
                                 ),
@@ -358,7 +460,8 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
                                 'CREATE TRAINER ERROR: $e',
                               );
 
-                              if (!dialogContext.mounted) {
+                              if (!dialogContext
+                                  .mounted) {
                                 return;
                               }
 
@@ -366,17 +469,35 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
                                 saving = false;
                               });
 
-                              ScaffoldMessenger.of(
-                                context,
-                              ).showSnackBar(
+                              ScaffoldMessenger
+                                  .of(context)
+                                  .showSnackBar(
                                 const SnackBar(
                                   content: Text(
-                                    'Failed to create trainer account.',
+                                    'Failed to create trainer.',
                                   ),
                                 ),
                               );
                             }
                           },
+                    icon: saving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child:
+                                CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Icon(
+                            Icons
+                                .person_add_outlined,
+                          ),
+                    label: Text(
+                      saving
+                          ? 'Creating...'
+                          : 'Create Trainer',
+                    ),
                   ),
                 ],
               );
@@ -385,15 +506,20 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
         },
       );
 
-      if (trainerCreated && mounted) {
+      // ==========================================================
+      // REFRESH AFTER DIALOG CLOSED
+      // ==========================================================
+
+      if (created && mounted) {
         await _fetchTrainers();
 
         if (!mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
           const SnackBar(
             content: Text(
-              'Trainer account created successfully.',
+              'Trainer created successfully.',
             ),
           ),
         );
@@ -408,12 +534,12 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
 
   // ============================================================
   // GET SINGLE TRAINER
+  //
   // GET /api/admin/trainers/:id
   // ============================================================
 
-  Future<Map<String, dynamic>?> _getTrainer(
-    num id,
-  ) async {
+  Future<Map<String, dynamic>?>
+      _getTrainer(num id) async {
     try {
       final api = context.read<ApiService>();
 
@@ -425,18 +551,27 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
         'GET TRAINER RESPONSE: $response',
       );
 
-      if (response is Map &&
-          response['trainer'] is Map) {
-        return Map<String, dynamic>.from(
-          response['trainer'] as Map,
-        );
+      if (response is Map) {
+        final trainer =
+            response['trainer'];
+
+        if (trainer is Map) {
+          return Map<String, dynamic>.from(
+            trainer,
+          );
+        }
       }
 
       return null;
     } on ApiException catch (e) {
+      debugPrint(
+        'GET TRAINER API ERROR: ${e.message}',
+      );
+
       if (!mounted) return null;
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
         SnackBar(
           content: Text(e.message),
         ),
@@ -450,7 +585,8 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
 
       if (!mounted) return null;
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
         const SnackBar(
           content: Text(
             'Failed to load trainer details.',
@@ -464,17 +600,17 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
 
   // ============================================================
   // VIEW TRAINER
+  //
   // GET /api/admin/trainers/:id
   // ============================================================
 
   Future<void> _viewTrainer(num id) async {
-    final trainer = await _getTrainer(id);
+    final trainer =
+        await _getTrainer(id);
 
     if (!mounted || trainer == null) {
       return;
     }
-
-    final scheme = Theme.of(context).colorScheme;
 
     final name = asString(
       trainer['name'],
@@ -492,7 +628,7 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
     final status = asString(
       trainer['status'],
       'ACTIVE',
-    );
+    ).toUpperCase();
 
     final createdAt = asString(
       trainer['created_at'],
@@ -501,85 +637,116 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
+        final theme =
+            Theme.of(dialogContext);
+
+        final scheme =
+            theme.colorScheme;
+
         return AlertDialog(
           title: const Text(
             'Trainer Details',
           ),
-          content: SizedBox(
-            width: 420,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircleAvatar(
-                  radius: 34,
-                  backgroundColor:
-                      scheme.primary.withValues(
-                    alpha: 0.12,
+
+          content: ConstrainedBox(
+            constraints:
+                const BoxConstraints(
+              maxWidth: 500,
+              maxHeight: 500,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize:
+                    MainAxisSize.min,
+                children: [
+                  CircleAvatar(
+                    radius: 34,
+                    backgroundColor:
+                        scheme.primary
+                            .withValues(
+                      alpha: 0.12,
+                    ),
+                    child: Icon(
+                      Icons
+                          .fitness_center,
+                      size: 34,
+                      color:
+                          scheme.primary,
+                    ),
                   ),
-                  child: Icon(
-                    Icons.fitness_center,
-                    size: 34,
-                    color: scheme.primary,
+
+                  const SizedBox(
+                    height: 16,
                   ),
-                ),
 
-                const SizedBox(height: 16),
+                  Text(
+                    name,
+                    textAlign:
+                        TextAlign.center,
+                    style: theme
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(
+                      fontWeight:
+                          FontWeight.bold,
+                    ),
+                  ),
 
-                Text(
-                  name,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(
-                        fontWeight:
-                            FontWeight.bold,
-                      ),
-                ),
+                  const SizedBox(
+                    height: 10,
+                  ),
 
-                const SizedBox(height: 6),
+                  _StatusChip(
+                    status: status,
+                  ),
 
-                StatusBadge(
-                  label: status.toUpperCase(),
-                  positive:
-                      status.toUpperCase() ==
-                          'ACTIVE',
-                ),
+                  const SizedBox(
+                    height: 22,
+                  ),
 
-                const SizedBox(height: 22),
-
-                _TrainerDetailRow(
-                  icon: Icons.email_outlined,
-                  label: 'Email',
-                  value: email.isEmpty
-                      ? 'Not provided'
-                      : email,
-                ),
-
-                const SizedBox(height: 12),
-
-                _TrainerDetailRow(
-                  icon: Icons.phone_outlined,
-                  label: 'Phone',
-                  value: phone.isEmpty
-                      ? 'Not provided'
-                      : phone,
-                ),
-
-                if (createdAt.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  _TrainerDetailRow(
+                  _DetailRow(
                     icon:
-                        Icons.calendar_today_outlined,
-                    label: 'Created',
-                    value: createdAt
-                        .split('T')
-                        .first,
+                        Icons.email_outlined,
+                    label: 'Email',
+                    value:
+                        email.isEmpty
+                            ? 'Not provided'
+                            : email,
                   ),
+
+                  const SizedBox(
+                    height: 14,
+                  ),
+
+                  _DetailRow(
+                    icon:
+                        Icons.phone_outlined,
+                    label: 'Phone',
+                    value:
+                        phone.isEmpty
+                            ? 'Not provided'
+                            : phone,
+                  ),
+
+                  if (createdAt
+                      .isNotEmpty) ...[
+                    const SizedBox(
+                      height: 14,
+                    ),
+                    _DetailRow(
+                      icon: Icons
+                          .calendar_today_outlined,
+                      label: 'Created',
+                      value: _formatDate(
+                        createdAt,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
+
           actions: [
             FilledButton(
               onPressed: () {
@@ -587,9 +754,8 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
                   dialogContext,
                 ).pop();
               },
-              child: const Text(
-                'Close',
-              ),
+              child:
+                  const Text('Close'),
             ),
           ],
         );
@@ -598,582 +764,36 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
   }
 
   // ============================================================
-  // EDIT TRAINER
-  // PUT /api/admin/trainers/:id
+  // DELETE / DEACTIVATE TRAINER
+  //
+  // DELETE /api/admin/trainers/:id
+  //
+  // IMPORTANT:
+  // Backend does NOT permanently delete.
+  // It changes status to INACTIVE.
   // ============================================================
 
-  Future<void> _openEditTrainerDialog(
+  Future<void> _deleteTrainer(
     num id,
+    String trainerName,
   ) async {
-    final trainer = await _getTrainer(id);
-
-    if (!mounted || trainer == null) {
-      return;
-    }
-
-    final nameController = TextEditingController(
-      text: asString(trainer['name']),
-    );
-
-    final emailController = TextEditingController(
-      text: asString(trainer['email']),
-    );
-
-    final phoneController = TextEditingController(
-      text: asString(trainer['phone']),
-    );
-
-    final passwordController =
-        TextEditingController();
-
-    final formKey = GlobalKey<FormState>();
-
-    String selectedStatus = asString(
-      trainer['status'],
-      'ACTIVE',
-    ).toUpperCase();
-
-    bool trainerUpdated = false;
-
-    try {
-      await showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogContext) {
-          bool saving = false;
-          bool obscurePassword = true;
-
-          return StatefulBuilder(
-            builder: (
-              dialogContext,
-              setDialogState,
-            ) {
-              return AlertDialog(
-                title: Row(
-                  children: [
-                    Icon(
-                      Icons.edit_outlined,
-                      color: Theme.of(dialogContext)
-                          .colorScheme
-                          .primary,
-                    ),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Text(
-                        'Edit Trainer',
-                      ),
-                    ),
-                  ],
-                ),
-
-                content: SizedBox(
-                  width: 440,
-                  child: Form(
-                    key: formKey,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // ==================================================
-                          // NAME
-                          // ==================================================
-
-                          TextFormField(
-                            controller: nameController,
-                            enabled: !saving,
-                            textInputAction:
-                                TextInputAction.next,
-                            decoration:
-                                const InputDecoration(
-                              labelText:
-                                  'Trainer Name *',
-                              prefixIcon: Icon(
-                                Icons.person_outline,
-                              ),
-                            ),
-                            validator: (value) {
-                              return Validators.requiredField(
-                                value,
-                                label: 'Name',
-                              );
-                            },
-                          ),
-
-                          const SizedBox(height: 14),
-
-                          // ==================================================
-                          // EMAIL
-                          // ==================================================
-
-                          TextFormField(
-                            controller: emailController,
-                            enabled: !saving,
-                            keyboardType:
-                                TextInputType.emailAddress,
-                            textInputAction:
-                                TextInputAction.next,
-                            decoration:
-                                const InputDecoration(
-                              labelText:
-                                  'Email Address *',
-                              prefixIcon: Icon(
-                                Icons.email_outlined,
-                              ),
-                            ),
-                            validator:
-                                Validators.email,
-                          ),
-
-                          const SizedBox(height: 14),
-
-                          // ==================================================
-                          // PHONE
-                          // ==================================================
-
-                          TextFormField(
-                            controller: phoneController,
-                            enabled: !saving,
-                            keyboardType:
-                                TextInputType.phone,
-                            textInputAction:
-                                TextInputAction.next,
-                            decoration:
-                                const InputDecoration(
-                              labelText:
-                                  'Phone Number',
-                              prefixIcon: Icon(
-                                Icons.phone_outlined,
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 14),
-
-                          // ==================================================
-                          // PASSWORD
-                          // ==================================================
-
-                          TextFormField(
-                            controller:
-                                passwordController,
-                            enabled: !saving,
-                            obscureText:
-                                obscurePassword,
-                            textInputAction:
-                                TextInputAction.next,
-                            decoration:
-                                InputDecoration(
-                              labelText:
-                                  'New Password',
-                              hintText:
-                                  'Leave empty to keep current password',
-                              prefixIcon: const Icon(
-                                Icons.lock_outline,
-                              ),
-                              suffixIcon:
-                                  IconButton(
-                                tooltip:
-                                    obscurePassword
-                                        ? 'Show password'
-                                        : 'Hide password',
-                                onPressed: saving
-                                    ? null
-                                    : () {
-                                        setDialogState(
-                                          () {
-                                            obscurePassword =
-                                                !obscurePassword;
-                                          },
-                                        );
-                                      },
-                                icon: Icon(
-                                  obscurePassword
-                                      ? Icons
-                                          .visibility_outlined
-                                      : Icons
-                                          .visibility_off_outlined,
-                                ),
-                              ),
-                            ),
-                            validator: (value) {
-                              final text =
-                                  value?.trim() ?? '';
-
-                              if (text.isEmpty) {
-                                return null;
-                              }
-
-                              return Validators.password(
-                                value,
-                              );
-                            },
-                          ),
-
-                          const SizedBox(height: 14),
-
-                          // ==================================================
-                          // STATUS
-                          // ==================================================
-
-                          DropdownButtonFormField<String>(
-                            initialValue:
-                                selectedStatus,
-                            decoration:
-                                const InputDecoration(
-                              labelText: 'Status',
-                              prefixIcon: Icon(
-                                Icons
-                                    .toggle_on_outlined,
-                              ),
-                              border:
-                                  OutlineInputBorder(),
-                            ),
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'ACTIVE',
-                                child: Text(
-                                  'ACTIVE',
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'INACTIVE',
-                                child: Text(
-                                  'INACTIVE',
-                                ),
-                              ),
-                            ],
-                            onChanged: saving
-                                ? null
-                                : (value) {
-                                    if (value ==
-                                        null) {
-                                      return;
-                                    }
-
-                                    setDialogState(() {
-                                      selectedStatus =
-                                          value;
-                                    });
-                                  },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                actions: [
-                  // ========================================================
-                  // CANCEL
-                  // ========================================================
-
-                  TextButton(
-                    onPressed: saving
-                        ? null
-                        : () {
-                            Navigator.of(
-                              dialogContext,
-                            ).pop();
-                          },
-                    child: const Text(
-                      'Cancel',
-                    ),
-                  ),
-
-                  // ========================================================
-                  // SAVE
-                  // ========================================================
-
-                  AppButton(
-                    label: 'Save Changes',
-                    icon: Icons.save_outlined,
-                    loading: saving,
-                    onPressed: saving
-                        ? null
-                        : () async {
-                            if (!formKey.currentState!
-                                .validate()) {
-                              return;
-                            }
-
-                            setDialogState(() {
-                              saving = true;
-                            });
-
-                            try {
-                              final api =
-                                  context.read<ApiService>();
-
-                              final body =
-                                  <String, dynamic>{
-                                'name':
-                                    nameController
-                                        .text
-                                        .trim(),
-                                'email':
-                                    emailController
-                                        .text
-                                        .trim(),
-                                'phone':
-                                    phoneController
-                                        .text
-                                        .trim(),
-                                'status':
-                                    selectedStatus,
-                              };
-
-                              // Only send password when
-                              // admin entered a new one.
-                              if (passwordController
-                                  .text
-                                  .trim()
-                                  .isNotEmpty) {
-                                body['password'] =
-                                    passwordController
-                                        .text;
-                              }
-
-                              final response =
-                                  await api.put(
-                                '/api/admin/trainers/$id',
-                                body: body,
-                              );
-
-                              debugPrint(
-                                'UPDATE TRAINER RESPONSE: $response',
-                              );
-
-                              trainerUpdated = true;
-
-                              if (dialogContext.mounted) {
-                                Navigator.of(
-                                  dialogContext,
-                                ).pop();
-                              }
-                            } on ApiException catch (e) {
-                              debugPrint(
-                                'UPDATE TRAINER API ERROR: ${e.message}',
-                              );
-
-                              if (!dialogContext.mounted) {
-                                return;
-                              }
-
-                              setDialogState(() {
-                                saving = false;
-                              });
-
-                              ScaffoldMessenger.of(
-                                context,
-                              ).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    e.message,
-                                  ),
-                                ),
-                              );
-                            } catch (e) {
-                              debugPrint(
-                                'UPDATE TRAINER ERROR: $e',
-                              );
-
-                              if (!dialogContext.mounted) {
-                                return;
-                              }
-
-                              setDialogState(() {
-                                saving = false;
-                              });
-
-                              ScaffoldMessenger.of(
-                                context,
-                              ).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Failed to update trainer.',
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                  ),
-                ],
-              );
-            },
-          );
-        },
-      );
-
-      // ============================================================
-      // REFRESH ONLY AFTER DIALOG CLOSED
-      // ============================================================
-
-      if (trainerUpdated && mounted) {
-        await _fetchTrainers();
-
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Trainer updated successfully.',
-            ),
-          ),
-        );
-      }
-    } finally {
-      nameController.dispose();
-      emailController.dispose();
-      phoneController.dispose();
-      passwordController.dispose();
-    }
-  }
-
-  // ============================================================
-  // CHANGE STATUS
-  // PUT /api/admin/trainers/:id
-  // ============================================================
-
-  Future<void> _changeTrainerStatus(
-    num id,
-    String currentStatus,
-  ) async {
-    final newStatus =
-        currentStatus.toUpperCase() == 'ACTIVE'
-            ? 'INACTIVE'
-            : 'ACTIVE';
-
-    final isActivating = newStatus == 'ACTIVE';
-
-    final confirmed = await showDialog<bool>(
+    final confirmed =
+        await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         final scheme =
-            Theme.of(dialogContext).colorScheme;
+            Theme.of(dialogContext)
+                .colorScheme;
 
-        return AlertDialog(
-          title: Text(
-            isActivating
-                ? 'Activate Trainer'
-                : 'Deactivate Trainer',
-          ),
-          content: Text(
-            isActivating
-                ? 'Are you sure you want to activate this trainer account?'
-                : 'Are you sure you want to deactivate this trainer account?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop(false);
-              },
-              child: const Text(
-                'Cancel',
-              ),
-            ),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: isActivating
-                    ? scheme.primary
-                    : scheme.error,
-                foregroundColor: isActivating
-                    ? scheme.onPrimary
-                    : scheme.onError,
-              ),
-              onPressed: () {
-                Navigator.of(
-                  dialogContext,
-                ).pop(true);
-              },
-              child: Text(
-                isActivating
-                    ? 'Activate'
-                    : 'Deactivate',
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed != true || !mounted) {
-      return;
-    }
-
-    try {
-      final api = context.read<ApiService>();
-
-      final response = await api.put(
-        '/api/admin/trainers/$id',
-        body: {
-          'status': newStatus,
-        },
-      );
-
-      debugPrint(
-        'CHANGE TRAINER STATUS RESPONSE: $response',
-      );
-
-      if (!mounted) return;
-
-      await _fetchTrainers();
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isActivating
-                ? 'Trainer activated successfully.'
-                : 'Trainer deactivated successfully.',
-          ),
-        ),
-      );
-    } on ApiException catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-        ),
-      );
-    } catch (e) {
-      debugPrint(
-        'CHANGE TRAINER STATUS ERROR: $e',
-      );
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Failed to change trainer status.',
-          ),
-        ),
-      );
-    }
-  }
-
-  // ============================================================
-  // DELETE / DEACTIVATE
-  // DELETE /api/admin/trainers/:id
-  // ============================================================
-
-  Future<void> _deleteTrainer(num id) async {
-    final scheme = Theme.of(context).colorScheme;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
         return AlertDialog(
           title: const Text(
             'Deactivate Trainer',
           ),
-          content: const Text(
-            'Are you sure you want to deactivate this trainer account?',
+
+          content: Text(
+            'Are you sure you want to deactivate "$trainerName"?',
           ),
+
           actions: [
             TextButton(
               onPressed: () {
@@ -1181,14 +801,17 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
                   dialogContext,
                 ).pop(false);
               },
-              child: const Text(
-                'Cancel',
-              ),
+              child:
+                  const Text('Cancel'),
             ),
+
             FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: scheme.error,
-                foregroundColor: scheme.onError,
+              style:
+                  FilledButton.styleFrom(
+                backgroundColor:
+                    scheme.error,
+                foregroundColor:
+                    scheme.onError,
               ),
               onPressed: () {
                 Navigator.of(
@@ -1204,15 +827,22 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
       },
     );
 
-    if (confirmed != true || !mounted) {
+    if (confirmed != true ||
+        !mounted) {
       return;
     }
 
     try {
-      final api = context.read<ApiService>();
+      final api =
+          context.read<ApiService>();
 
-      await api.delete(
+      final response =
+          await api.delete(
         '/api/admin/trainers/$id',
+      );
+
+      debugPrint(
+        'DELETE TRAINER RESPONSE: $response',
       );
 
       if (!mounted) return;
@@ -1221,7 +851,8 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
         const SnackBar(
           content: Text(
             'Trainer deactivated successfully.',
@@ -1229,9 +860,14 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
         ),
       );
     } on ApiException catch (e) {
+      debugPrint(
+        'DELETE TRAINER API ERROR: ${e.message}',
+      );
+
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
         SnackBar(
           content: Text(e.message),
         ),
@@ -1243,13 +879,49 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
         const SnackBar(
           content: Text(
             'Failed to deactivate trainer.',
           ),
         ),
       );
+    }
+  }
+
+  // ============================================================
+  // FORMAT DATE
+  // ============================================================
+
+  String _formatDate(String value) {
+    if (value.isEmpty) {
+      return 'Not available';
+    }
+
+    try {
+      final date =
+          DateTime.parse(value);
+
+      final day =
+          date.day.toString().padLeft(
+                2,
+                '0',
+              );
+
+      final month =
+          date.month.toString().padLeft(
+                2,
+                '0',
+              );
+
+      return '$day-$month-${date.year}';
+    } catch (_) {
+      if (value.contains('T')) {
+        return value.split('T').first;
+      }
+
+      return value;
     }
   }
 
@@ -1261,8 +933,11 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
     BuildContext context,
     Map<String, dynamic> trainer,
   ) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final theme =
+        Theme.of(context);
+
+    final scheme =
+        theme.colorScheme;
 
     final id = asNum(
       trainer['id'],
@@ -1284,19 +959,22 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
     final status = asString(
       trainer['status'],
       'ACTIVE',
-    );
+    ).toUpperCase();
 
     final isActive =
-        status.toUpperCase() == 'ACTIVE';
+        status == 'ACTIVE';
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding:
+            const EdgeInsets.all(18),
         child: Column(
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
           children: [
-            // ==========================================================
+            // ========================================================
             // HEADER
-            // ==========================================================
+            // ========================================================
 
             Row(
               crossAxisAlignment:
@@ -1305,132 +983,115 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
                 CircleAvatar(
                   radius: 28,
                   backgroundColor:
-                      scheme.primary.withValues(
+                      scheme.primary
+                          .withValues(
                     alpha: 0.12,
                   ),
                   child: Icon(
-                    Icons.fitness_center,
-                    color: scheme.primary,
+                    Icons
+                        .fitness_center,
+                    color:
+                        scheme.primary,
                     size: 28,
                   ),
                 ),
 
-                const SizedBox(width: 14),
+                const SizedBox(
+                  width: 14,
+                ),
 
                 Expanded(
                   child: Column(
                     crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                        CrossAxisAlignment
+                            .start,
                     children: [
                       Text(
                         name,
                         maxLines: 2,
                         overflow:
-                            TextOverflow.ellipsis,
-                        style: theme.textTheme.titleMedium
+                            TextOverflow
+                                .ellipsis,
+                        style: theme
+                            .textTheme
+                            .titleMedium
                             ?.copyWith(
                           fontWeight:
-                              FontWeight.bold,
+                              FontWeight
+                                  .bold,
                         ),
                       ),
 
-                      const SizedBox(height: 6),
+                      const SizedBox(
+                        height: 7,
+                      ),
 
-                      StatusBadge(
-                        label:
-                            status.toUpperCase(),
-                        positive: isActive,
+                      _StatusChip(
+                        status: status,
                       ),
                     ],
                   ),
                 ),
 
-                PopupMenuButton<String>(
-                  tooltip: 'Trainer actions',
-                  onSelected: (value) {
-                    if (value == 'view') {
+                PopupMenuButton<
+                    String>(
+                  tooltip:
+                      'Trainer actions',
+                  onSelected:
+                      (value) {
+                    if (value ==
+                        'view') {
                       _viewTrainer(id);
                     }
 
-                    if (value == 'edit') {
-                      _openEditTrainerDialog(id);
-                    }
-
-                    if (value == 'status') {
-                      _changeTrainerStatus(
+                    if (value ==
+                        'deactivate') {
+                      _deleteTrainer(
                         id,
-                        status,
+                        name,
                       );
                     }
-
-                    if (value == 'delete') {
-                      _deleteTrainer(id);
-                    }
                   },
-                  itemBuilder: (context) {
+                  itemBuilder:
+                      (context) {
                     return [
-                      const PopupMenuItem<String>(
+                      const PopupMenuItem<
+                          String>(
                         value: 'view',
-                        child: ListTile(
-                          contentPadding:
-                              EdgeInsets.zero,
-                          leading: Icon(
-                            Icons
-                                .visibility_outlined,
-                          ),
-                          title: Text(
-                            'View Details',
-                          ),
-                        ),
-                      ),
-
-                      const PopupMenuItem<String>(
-                        value: 'edit',
-                        child: ListTile(
-                          contentPadding:
-                              EdgeInsets.zero,
-                          leading: Icon(
-                            Icons.edit_outlined,
-                          ),
-                          title: Text(
-                            'Edit Trainer',
-                          ),
-                        ),
-                      ),
-
-                      PopupMenuItem<String>(
-                        value: 'status',
-                        child: ListTile(
-                          contentPadding:
-                              EdgeInsets.zero,
-                          leading: Icon(
-                            isActive
-                                ? Icons
-                                    .person_off_outlined
-                                : Icons
-                                    .person_add_outlined,
-                          ),
-                          title: Text(
-                            isActive
-                                ? 'Deactivate'
-                                : 'Activate',
-                          ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons
+                                  .visibility_outlined,
+                            ),
+                            SizedBox(
+                              width: 10,
+                            ),
+                            Text(
+                              'View Details',
+                            ),
+                          ],
                         ),
                       ),
 
                       if (isActive)
-                        const PopupMenuItem<String>(
-                          value: 'delete',
-                          child: ListTile(
-                            contentPadding:
-                                EdgeInsets.zero,
-                            leading: Icon(
-                              Icons
-                                  .delete_outline,
-                            ),
-                            title: Text(
-                              'Deactivate',
-                            ),
+                        const PopupMenuItem<
+                            String>(
+                          value:
+                              'deactivate',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons
+                                    .person_off_outlined,
+                              ),
+                              SizedBox(
+                                width: 10,
+                              ),
+                              Text(
+                                'Deactivate',
+                              ),
+                            ],
                           ),
                         ),
                     ];
@@ -1439,110 +1100,99 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
               ],
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(
+              height: 16,
+            ),
 
             const Divider(
               height: 1,
             ),
 
-            const SizedBox(height: 14),
+            const SizedBox(
+              height: 14,
+            ),
 
-            // ==========================================================
+            // ========================================================
             // EMAIL
-            // ==========================================================
+            // ========================================================
 
-            _TrainerInfoRow(
-              icon: Icons.email_outlined,
+            _InfoRow(
+              icon:
+                  Icons.email_outlined,
               text: email.isEmpty
                   ? 'No email registered'
                   : email,
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(
+              height: 10,
+            ),
 
-            // ==========================================================
+            // ========================================================
             // PHONE
-            // ==========================================================
+            // ========================================================
 
-            _TrainerInfoRow(
-              icon: Icons.phone_outlined,
+            _InfoRow(
+              icon:
+                  Icons.phone_outlined,
               text: phone.isEmpty
                   ? 'No phone registered'
                   : phone,
             ),
 
-            const SizedBox(height: 14),
+            const SizedBox(
+              height: 16,
+            ),
 
-            // ==========================================================
-            // ACTION BUTTONS
-            // ==========================================================
+            // ========================================================
+            // VIEW / DEACTIVATE
+            // ========================================================
 
-            Align(
-              alignment: Alignment.centerRight,
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      _viewTrainer(id);
-                    },
-                    icon: const Icon(
-                      Icons.visibility_outlined,
-                      size: 18,
-                    ),
-                    label: const Text(
-                      'View',
-                    ),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () {
+                    _viewTrainer(id);
+                  },
+                  icon: const Icon(
+                    Icons
+                        .visibility_outlined,
+                    size: 18,
                   ),
+                  label:
+                      const Text('View'),
+                ),
 
+                if (isActive)
                   OutlinedButton.icon(
-                    onPressed: () {
-                      _openEditTrainerDialog(id);
-                    },
-                    icon: const Icon(
-                      Icons.edit_outlined,
-                      size: 18,
-                    ),
-                    label: const Text(
-                      'Edit',
-                    ),
-                  ),
-
-                  OutlinedButton.icon(
-                    style:
-                        OutlinedButton.styleFrom(
-                      foregroundColor: isActive
-                          ? scheme.error
-                          : scheme.primary,
+                    style: OutlinedButton
+                        .styleFrom(
+                      foregroundColor:
+                          scheme.error,
                       side: BorderSide(
-                        color: isActive
-                            ? scheme.error
-                            : scheme.primary,
+                        color:
+                            scheme.error,
                       ),
                     ),
                     onPressed: () {
-                      _changeTrainerStatus(
+                      _deleteTrainer(
                         id,
-                        status,
+                        name,
                       );
                     },
-                    icon: Icon(
-                      isActive
-                          ? Icons
-                              .person_off_outlined
-                          : Icons
-                              .person_add_outlined,
+                    icon: const Icon(
+                      Icons
+                          .person_off_outlined,
                       size: 18,
                     ),
-                    label: Text(
-                      isActive
-                          ? 'Deactivate'
-                          : 'Activate',
+                    label:
+                        const Text(
+                      'Deactivate',
                     ),
                   ),
-                ],
-              ),
+              ],
             ),
           ],
         ),
@@ -1555,373 +1205,396 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
   // ============================================================
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+  Widget build(
+    BuildContext context,
+  ) {
+    final theme =
+        Theme.of(context);
+
+    final scheme =
+        theme.colorScheme;
 
     final padding =
-        Responsive.pagePadding(context);
+        Responsive.pagePadding(
+      context,
+    );
 
-    final activeCount = _trainers.where(
-      (trainer) =>
-          asString(
-            trainer['status'],
-            'ACTIVE',
-          ).toUpperCase() ==
-          'ACTIVE',
+    final activeCount =
+        _trainers.where(
+      (trainer) {
+        return asString(
+              trainer['status'],
+              'ACTIVE',
+            ).toUpperCase() ==
+            'ACTIVE';
+      },
     ).length;
 
-    final inactiveCount = _trainers.length -
-        activeCount;
+    final inactiveCount =
+        _trainers.length -
+            activeCount;
 
-    return AsyncStateView(
-      loading: _loading,
-      error: _error,
-      onRetry: _fetchTrainers,
-      isEmpty: _trainers.isEmpty,
-      emptyMessage:
-          'No trainers registered yet. Add staff members using the button above.',
-      child: RefreshIndicator(
+    return Scaffold(
+      body: RefreshIndicator(
         onRefresh: _fetchTrainers,
-        child: SingleChildScrollView(
-          physics:
-              const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.all(padding),
-          child: Center(
-            child: ConstrainedBox(
-              constraints:
-                  const BoxConstraints(
-                maxWidth: 1100,
-              ),
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                children: [
-                  // ======================================================
-                  // PAGE HEADER
-                  // ======================================================
-
-                  LayoutBuilder(
-                    builder:
-                        (context, constraints) {
-                      final isSmall =
-                          constraints.maxWidth <
-                              650;
-
-                      if (isSmall) {
-                        return Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Coaching Staff Administration',
-                              style: theme
-                                  .textTheme
-                                  .headlineMedium
-                                  ?.copyWith(
-                                fontWeight:
-                                    FontWeight.bold,
-                              ),
-                            ),
-
-                            const SizedBox(height: 6),
-
-                            Text(
-                              'Manage certified trainers, credentials, and coaching staff.',
-                              style: theme
-                                  .textTheme
-                                  .bodyMedium,
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            SizedBox(
-                              width: double.infinity,
-                              child: AppButton(
-                                label:
-                                    'Add Trainer',
-                                icon: Icons
-                                    .person_add_outlined,
-                                onPressed:
-                                    _openCreateTrainerDialog,
-                              ),
-                            ),
-                          ],
-                        );
-                      }
-
-                      return Row(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment
-                                      .start,
-                              children: [
-                                Text(
-                                  'Coaching Staff Administration',
-                                  style: theme
-                                      .textTheme
-                                      .headlineMedium
-                                      ?.copyWith(
-                                    fontWeight:
-                                        FontWeight
-                                            .bold,
-                                  ),
-                                ),
-
-                                const SizedBox(height: 6),
-
-                                Text(
-                                  'Manage certified trainers, credentials, and coaching staff.',
-                                  style: theme
-                                      .textTheme
-                                      .bodyMedium,
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(width: 16),
-
-                          AppButton(
-                            label: 'Add Trainer',
-                            icon: Icons
-                                .person_add_outlined,
-                            onPressed:
-                                _openCreateTrainerDialog,
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ======================================================
-                  // STAT CARDS
-                  // ======================================================
-
-                  LayoutBuilder(
-                    builder:
-                        (context, constraints) {
-                      final isSmall =
-                          constraints.maxWidth <
-                              650;
-
-                      if (isSmall) {
-                        return Column(
-                          children: [
-                            _buildCountCard(
-                              context,
-                              title:
-                                  'Total Trainers',
-                              count:
-                                  _trainers.length,
-                              icon:
-                                  Icons.groups_outlined,
-                            ),
-                            const SizedBox(
-                              height: 12,
-                            ),
-                            _buildCountCard(
-                              context,
-                              title:
-                                  'Active Trainers',
-                              count:
-                                  activeCount,
-                              icon:
-                                  Icons
-                                      .person_outline,
-                            ),
-                            const SizedBox(
-                              height: 12,
-                            ),
-                            _buildCountCard(
-                              context,
-                              title:
-                                  'Inactive Trainers',
-                              count:
-                                  inactiveCount,
-                              icon:
-                                  Icons
-                                      .person_off_outlined,
-                            ),
-                          ],
-                        );
-                      }
-
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: _buildCountCard(
-                              context,
-                              title:
-                                  'Total Trainers',
-                              count:
-                                  _trainers.length,
-                              icon:
-                                  Icons
-                                      .groups_outlined,
-                            ),
-                          ),
-
-                          const SizedBox(
-                            width: 12,
-                          ),
-
-                          Expanded(
-                            child: _buildCountCard(
-                              context,
-                              title:
-                                  'Active Trainers',
-                              count:
-                                  activeCount,
-                              icon:
-                                  Icons
-                                      .person_outline,
-                            ),
-                          ),
-
-                          const SizedBox(
-                            width: 12,
-                          ),
-
-                          Expanded(
-                            child: _buildCountCard(
-                              context,
-                              title:
-                                  'Inactive Trainers',
-                              count:
-                                  inactiveCount,
-                              icon:
-                                  Icons
-                                      .person_off_outlined,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // ======================================================
-                  // TRAINER LIST
-                  // ======================================================
-
-                  if (_trainers.isEmpty)
-                    Card(
-                      child: Padding(
-                        padding:
-                            const EdgeInsets.all(
-                          30,
+        child: _loading
+            ? const Center(
+                child:
+                    CircularProgressIndicator(),
+              )
+            : _error != null
+                ? _buildErrorState()
+                : SingleChildScrollView(
+                    physics:
+                        const AlwaysScrollableScrollPhysics(),
+                    padding:
+                        EdgeInsets.all(
+                      padding,
+                    ),
+                    child: Center(
+                      child:
+                          ConstrainedBox(
+                        constraints:
+                            const BoxConstraints(
+                          maxWidth: 1100,
                         ),
-                        child: Center(
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons
-                                    .fitness_center_outlined,
-                                size: 48,
-                                color: scheme
-                                    .onSurfaceVariant,
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment
+                                  .start,
+                          children: [
+                            // ==================================================
+                            // HEADER
+                            // ==================================================
+
+                            LayoutBuilder(
+                              builder:
+                                  (
+                                context,
+                                constraints,
+                              ) {
+                                final small =
+                                    constraints.maxWidth <
+                                        650;
+
+                                if (small) {
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment
+                                            .start,
+                                    children: [
+                                      Text(
+                                        'Trainers',
+                                        style: theme
+                                            .textTheme
+                                            .headlineMedium
+                                            ?.copyWith(
+                                          fontWeight:
+                                              FontWeight
+                                                  .bold,
+                                        ),
+                                      ),
+
+                                      const SizedBox(
+                                        height: 6,
+                                      ),
+
+                                      Text(
+                                        'Manage your gym trainers and coaching staff.',
+                                        style: theme
+                                            .textTheme
+                                            .bodyMedium,
+                                      ),
+
+                                      const SizedBox(
+                                        height: 16,
+                                      ),
+
+                                      SizedBox(
+                                        width: double
+                                            .infinity,
+                                        child:
+                                            FilledButton
+                                                .icon(
+                                          onPressed:
+                                              _openCreateTrainerDialog,
+                                          icon:
+                                              const Icon(
+                                            Icons
+                                                .person_add_outlined,
+                                          ),
+                                          label:
+                                              const Text(
+                                            'Add Trainer',
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }
+
+                                return Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment
+                                          .start,
+                                  children: [
+                                    Expanded(
+                                      child:
+                                          Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment
+                                                .start,
+                                        children: [
+                                          Text(
+                                            'Trainers',
+                                            style: theme
+                                                .textTheme
+                                                .headlineMedium
+                                                ?.copyWith(
+                                              fontWeight:
+                                                  FontWeight
+                                                      .bold,
+                                            ),
+                                          ),
+
+                                          const SizedBox(
+                                            height: 6,
+                                          ),
+
+                                          Text(
+                                            'Manage your gym trainers and coaching staff.',
+                                            style: theme
+                                                .textTheme
+                                                .bodyMedium,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    const SizedBox(
+                                      width: 16,
+                                    ),
+
+                                    FilledButton
+                                        .icon(
+                                      onPressed:
+                                          _openCreateTrainerDialog,
+                                      icon:
+                                          const Icon(
+                                        Icons
+                                            .person_add_outlined,
+                                      ),
+                                      label:
+                                          const Text(
+                                        'Add Trainer',
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+
+                            const SizedBox(
+                              height: 24,
+                            ),
+
+                            // ==================================================
+                            // STATISTICS
+                            // ==================================================
+
+                            LayoutBuilder(
+                              builder:
+                                  (
+                                context,
+                                constraints,
+                              ) {
+                                final small =
+                                    constraints.maxWidth <
+                                        650;
+
+                                if (small) {
+                                  return Column(
+                                    children: [
+                                      _buildCountCard(
+                                        context,
+                                        'Total Trainers',
+                                        _trainers
+                                            .length,
+                                        Icons
+                                            .groups_outlined,
+                                      ),
+
+                                      const SizedBox(
+                                        height: 12,
+                                      ),
+
+                                      _buildCountCard(
+                                        context,
+                                        'Active Trainers',
+                                        activeCount,
+                                        Icons
+                                            .person_outline,
+                                      ),
+
+                                      const SizedBox(
+                                        height: 12,
+                                      ),
+
+                                      _buildCountCard(
+                                        context,
+                                        'Inactive Trainers',
+                                        inactiveCount,
+                                        Icons
+                                            .person_off_outlined,
+                                      ),
+                                    ],
+                                  );
+                                }
+
+                                return Row(
+                                  children: [
+                                    Expanded(
+                                      child:
+                                          _buildCountCard(
+                                        context,
+                                        'Total Trainers',
+                                        _trainers
+                                            .length,
+                                        Icons
+                                            .groups_outlined,
+                                      ),
+                                    ),
+
+                                    const SizedBox(
+                                      width: 12,
+                                    ),
+
+                                    Expanded(
+                                      child:
+                                          _buildCountCard(
+                                        context,
+                                        'Active Trainers',
+                                        activeCount,
+                                        Icons
+                                            .person_outline,
+                                      ),
+                                    ),
+
+                                    const SizedBox(
+                                      width: 12,
+                                    ),
+
+                                    Expanded(
+                                      child:
+                                          _buildCountCard(
+                                        context,
+                                        'Inactive Trainers',
+                                        inactiveCount,
+                                        Icons
+                                            .person_off_outlined,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+
+                            const SizedBox(
+                              height: 20,
+                            ),
+
+                            // ==================================================
+                            // EMPTY
+                            // ==================================================
+
+                            if (_trainers
+                                .isEmpty)
+                              _buildEmptyState()
+                            else
+                              LayoutBuilder(
+                                builder:
+                                    (
+                                  context,
+                                  constraints,
+                                ) {
+                                  if (constraints
+                                          .maxWidth >=
+                                      850) {
+                                    return GridView
+                                        .builder(
+                                      shrinkWrap:
+                                          true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      gridDelegate:
+                                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                                        maxCrossAxisExtent:
+                                            520,
+                                        crossAxisSpacing:
+                                            16,
+                                        mainAxisSpacing:
+                                            16,
+                                        mainAxisExtent:
+                                            260,
+                                      ),
+                                      itemCount:
+                                          _trainers
+                                              .length,
+                                      itemBuilder:
+                                          (
+                                        context,
+                                        index,
+                                      ) {
+                                        return _buildTrainerCard(
+                                          context,
+                                          _trainers[
+                                              index],
+                                        );
+                                      },
+                                    );
+                                  }
+
+                                  return ListView
+                                      .separated(
+                                    shrinkWrap:
+                                        true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount:
+                                        _trainers
+                                            .length,
+                                    separatorBuilder:
+                                        (
+                                      context,
+                                      index,
+                                    ) {
+                                      return const SizedBox(
+                                        height: 12,
+                                      );
+                                    },
+                                    itemBuilder:
+                                        (
+                                      context,
+                                      index,
+                                    ) {
+                                      return _buildTrainerCard(
+                                        context,
+                                        _trainers[
+                                            index],
+                                      );
+                                    },
+                                  );
+                                },
                               ),
 
-                              const SizedBox(
-                                height: 12,
-                              ),
-
-                              Text(
-                                'No trainers registered yet.',
-                                style: theme
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(
-                                  fontWeight:
-                                      FontWeight
-                                          .bold,
-                                ),
-                              ),
-
-                              const SizedBox(
-                                height: 6,
-                              ),
-
-                              Text(
-                                'Use the Add Trainer button to create the first trainer account.',
-                                textAlign:
-                                    TextAlign.center,
-                                style: theme
-                                    .textTheme
-                                    .bodyMedium,
-                              ),
-                            ],
-                          ),
+                            const SizedBox(
+                              height: 24,
+                            ),
+                          ],
                         ),
                       ),
-                    )
-                  else
-                    LayoutBuilder(
-                      builder:
-                          (context, constraints) {
-                        if (constraints.maxWidth >=
-                            850) {
-                          return GridView.builder(
-                            shrinkWrap: true,
-                            physics:
-                                const NeverScrollableScrollPhysics(),
-                            gridDelegate:
-                                const SliverGridDelegateWithMaxCrossAxisExtent(
-                              maxCrossAxisExtent:
-                                  520,
-                              crossAxisSpacing:
-                                  16,
-                              mainAxisSpacing: 16,
-                              mainAxisExtent: 270,
-                            ),
-                            itemCount:
-                                _trainers.length,
-                            itemBuilder:
-                                (context, index) {
-                              return _buildTrainerCard(
-                                context,
-                                _trainers[index],
-                              );
-                            },
-                          );
-                        }
-
-                        return ListView.separated(
-                          shrinkWrap: true,
-                          physics:
-                              const NeverScrollableScrollPhysics(),
-                          itemCount:
-                              _trainers.length,
-                          separatorBuilder:
-                              (_, _) =>
-                                  const SizedBox(
-                            height: 12,
-                          ),
-                          itemBuilder:
-                              (context, index) {
-                            return _buildTrainerCard(
-                              context,
-                              _trainers[index],
-                            );
-                          },
-                        );
-                      },
                     ),
-
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-          ),
-        ),
+                  ),
       ),
     );
   }
@@ -1931,62 +1604,80 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
   // ============================================================
 
   Widget _buildCountCard(
-    BuildContext context, {
-    required String title,
-    required int count,
-    required IconData icon,
-  }) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    BuildContext context,
+    String title,
+    int count,
+    IconData icon,
+  ) {
+    final theme =
+        Theme.of(context);
+
+    final scheme =
+        theme.colorScheme;
 
     return Card(
-      color: scheme.surfaceContainerHighest,
+      color:
+          scheme.surfaceContainerHighest,
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding:
+            const EdgeInsets.all(18),
         child: Row(
           children: [
             CircleAvatar(
               backgroundColor:
-                  scheme.primary.withValues(
+                  scheme.primary
+                      .withValues(
                 alpha: 0.12,
               ),
               child: Icon(
                 icon,
-                color: scheme.primary,
+                color:
+                    scheme.primary,
               ),
             ),
 
-            const SizedBox(width: 14),
+            const SizedBox(
+              width: 14,
+            ),
 
             Expanded(
               child: Column(
                 crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                    CrossAxisAlignment
+                        .start,
                 children: [
                   Text(
                     title,
-                    style:
-                        theme.textTheme.bodyMedium,
+                    style: theme
+                        .textTheme
+                        .bodyMedium,
                   ),
-                  const SizedBox(height: 3),
+
+                  const SizedBox(
+                    height: 3,
+                  ),
+
                   Text(
                     '$count',
                     style: theme
                         .textTheme
                         .headlineSmall
                         ?.copyWith(
-                          fontWeight:
-                              FontWeight.bold,
-                        ),
+                      fontWeight:
+                          FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
             ),
 
-            if (title == 'Total Trainers')
+            if (title ==
+                'Total Trainers')
               IconButton(
-                tooltip: 'Refresh',
-                onPressed: _fetchTrainers,
+                tooltip:
+                    'Refresh',
+                onPressed:
+                    _fetchTrainers,
                 icon: const Icon(
                   Icons.refresh,
                 ),
@@ -1996,14 +1687,249 @@ class _AdminTrainersPageState extends State<AdminTrainersPage> {
       ),
     );
   }
+
+  // ============================================================
+  // EMPTY STATE
+  // ============================================================
+
+  Widget _buildEmptyState() {
+    final theme =
+        Theme.of(context);
+
+    final scheme =
+        theme.colorScheme;
+
+    return Card(
+      child: Padding(
+        padding:
+            const EdgeInsets.all(32),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(
+                Icons
+                    .fitness_center_outlined,
+                size: 52,
+                color:
+                    scheme.onSurfaceVariant,
+              ),
+
+              const SizedBox(
+                height: 14,
+              ),
+
+              Text(
+                'No trainers registered yet.',
+                textAlign:
+                    TextAlign.center,
+                style: theme
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(
+                  fontWeight:
+                      FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(
+                height: 6,
+              ),
+
+              Text(
+                'Click "Add Trainer" to create the first trainer account.',
+                textAlign:
+                    TextAlign.center,
+                style: theme
+                    .textTheme
+                    .bodyMedium,
+              ),
+
+              const SizedBox(
+                height: 18,
+              ),
+
+              FilledButton.icon(
+                onPressed:
+                    _openCreateTrainerDialog,
+                icon: const Icon(
+                  Icons
+                      .person_add_outlined,
+                ),
+                label:
+                    const Text(
+                  'Add Trainer',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // ERROR STATE
+  // ============================================================
+
+  Widget _buildErrorState() {
+    final theme =
+        Theme.of(context);
+
+    final scheme =
+        theme.colorScheme;
+
+    return Center(
+      child: Padding(
+        padding:
+            const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints:
+              const BoxConstraints(
+            maxWidth: 500,
+          ),
+          child: Card(
+            child: Padding(
+              padding:
+                  const EdgeInsets.all(28),
+              child: Column(
+                mainAxisSize:
+                    MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons
+                        .error_outline,
+                    size: 52,
+                    color:
+                        scheme.error,
+                  ),
+
+                  const SizedBox(
+                    height: 14,
+                  ),
+
+                  Text(
+                    'Unable to load trainers',
+                    textAlign:
+                        TextAlign.center,
+                    style: theme
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(
+                      fontWeight:
+                          FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(
+                    height: 8,
+                  ),
+
+                  Text(
+                    _error ??
+                        'Something went wrong.',
+                    textAlign:
+                        TextAlign.center,
+                  ),
+
+                  const SizedBox(
+                    height: 18,
+                  ),
+
+                  FilledButton.icon(
+                    onPressed:
+                        _fetchTrainers,
+                    icon: const Icon(
+                      Icons.refresh,
+                    ),
+                    label:
+                        const Text(
+                      'Retry',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 // ============================================================================
-// TRAINER INFO ROW
+// STATUS CHIP
 // ============================================================================
 
-class _TrainerInfoRow extends StatelessWidget {
-  const _TrainerInfoRow({
+class _StatusChip
+    extends StatelessWidget {
+  const _StatusChip({
+    required this.status,
+  });
+
+  final String status;
+
+  @override
+  Widget build(
+    BuildContext context,
+  ) {
+    final scheme =
+        Theme.of(context)
+            .colorScheme;
+
+    final active =
+        status.toUpperCase() ==
+            'ACTIVE';
+
+    final background =
+        active
+            ? scheme.primary
+                .withValues(
+                alpha: 0.12,
+              )
+            : scheme.error
+                .withValues(
+                alpha: 0.12,
+              );
+
+    final foreground =
+        active
+            ? scheme.primary
+            : scheme.error;
+
+    return Container(
+      padding:
+          const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 5,
+      ),
+      decoration:
+          BoxDecoration(
+        color: background,
+        borderRadius:
+            BorderRadius.circular(
+          20,
+        ),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(
+          color: foreground,
+          fontSize: 12,
+          fontWeight:
+              FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// INFO ROW
+// ============================================================================
+
+class _InfoRow
+    extends StatelessWidget {
+  const _InfoRow({
     required this.icon,
     required this.text,
   });
@@ -2012,27 +1938,37 @@ class _TrainerInfoRow extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+  Widget build(
+    BuildContext context,
+  ) {
+    final theme =
+        Theme.of(context);
+
+    final scheme =
+        theme.colorScheme;
 
     return Row(
       children: [
         Icon(
           icon,
           size: 19,
-          color: scheme.onSurfaceVariant,
+          color:
+              scheme.onSurfaceVariant,
         ),
 
-        const SizedBox(width: 10),
+        const SizedBox(
+          width: 10,
+        ),
 
         Expanded(
           child: Text(
             text,
             maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style:
-                theme.textTheme.bodyMedium,
+            overflow:
+                TextOverflow.ellipsis,
+            style: theme
+                .textTheme
+                .bodyMedium,
           ),
         ),
       ],
@@ -2041,11 +1977,12 @@ class _TrainerInfoRow extends StatelessWidget {
 }
 
 // ============================================================================
-// TRAINER DETAIL ROW
+// DETAIL ROW
 // ============================================================================
 
-class _TrainerDetailRow extends StatelessWidget {
-  const _TrainerDetailRow({
+class _DetailRow
+    extends StatelessWidget {
+  const _DetailRow({
     required this.icon,
     required this.label,
     required this.value,
@@ -2056,9 +1993,14 @@ class _TrainerDetailRow extends StatelessWidget {
   final String value;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+  Widget build(
+    BuildContext context,
+  ) {
+    final theme =
+        Theme.of(context);
+
+    final scheme =
+        theme.colorScheme;
 
     return Row(
       crossAxisAlignment:
@@ -2067,33 +2009,41 @@ class _TrainerDetailRow extends StatelessWidget {
         Icon(
           icon,
           size: 20,
-          color: scheme.primary,
+          color:
+              scheme.primary,
         ),
 
-        const SizedBox(width: 12),
+        const SizedBox(
+          width: 12,
+        ),
 
         SizedBox(
-          width: 70,
+          width: 65,
           child: Text(
             label,
             style: theme
                 .textTheme
                 .bodySmall
                 ?.copyWith(
-              fontWeight: FontWeight.bold,
+              fontWeight:
+                  FontWeight.bold,
             ),
           ),
         ),
 
-        const SizedBox(width: 8),
+        const SizedBox(
+          width: 8,
+        ),
 
         Expanded(
           child: Text(
             value,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style:
-                theme.textTheme.bodyMedium,
+            maxLines: 4,
+            overflow:
+                TextOverflow.ellipsis,
+            style: theme
+                .textTheme
+                .bodyMedium,
           ),
         ),
       ],
