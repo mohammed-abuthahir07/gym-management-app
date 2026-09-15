@@ -30,9 +30,10 @@ class _AdminContentPageState extends State<AdminContentPage> {
     _fetchContent();
   }
 
-  // ======================================================
-  // FETCH ALL CONTENT
-  // ======================================================
+  // ============================================================
+  // GET ALL CONTENT
+  // GET /api/admin/content
+  // ============================================================
 
   Future<void> _fetchContent() async {
     if (!mounted) return;
@@ -42,50 +43,114 @@ class _AdminContentPageState extends State<AdminContentPage> {
       _error = null;
     });
 
-    final api = context.read<ApiService>();
-
     try {
-      final res = await api.get('/api/admin/content');
+      final api = context.read<ApiService>();
+
+      final response = await api.get(
+        '/api/admin/content',
+      );
 
       List<dynamic> list = [];
 
-      if (res is Map && res['data'] is List) {
-        list = res['data'] as List;
-      } else if (res is Map && res['content'] is List) {
-        list = res['content'] as List;
-      } else if (res is List) {
-        list = res;
+      if (response is Map) {
+        // Possible backend response:
+        // { "content": [...] }
+
+        if (response['content'] is List) {
+          list = response['content'];
+        }
+
+        // Possible backend response:
+        // { "data": [...] }
+
+        else if (response['data'] is List) {
+          list = response['data'];
+        }
+      } else if (response is List) {
+        list = response;
       }
 
       if (!mounted) return;
 
       setState(() {
         _items = asMapList(list);
+        _loading = false;
       });
     } on ApiException catch (e) {
       if (!mounted) return;
 
       setState(() {
         _error = e.message;
+        _loading = false;
       });
     } catch (e) {
       if (!mounted) return;
 
       setState(() {
         _error = 'Failed to load gallery content.';
-      });
-    } finally {
-      if (!mounted) return;
-
-      setState(() {
         _loading = false;
       });
     }
   }
 
-  // ======================================================
+  // ============================================================
+  // GET SINGLE CONTENT
+  // GET /api/admin/content/:id
+  // ============================================================
+
+  Future<Map<String, dynamic>?> _getContentById(
+    num id,
+  ) async {
+    try {
+      final api = context.read<ApiService>();
+
+      final response = await api.get(
+        '/api/admin/content/$id',
+      );
+
+      if (response is Map) {
+        if (response['content'] is Map) {
+          return Map<String, dynamic>.from(
+            response['content'] as Map,
+          );
+        }
+
+        if (response['data'] is Map) {
+          return Map<String, dynamic>.from(
+            response['data'] as Map,
+          );
+        }
+      }
+
+      return null;
+    } on ApiException catch (e) {
+      if (!mounted) return null;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+        ),
+      );
+
+      return null;
+    } catch (_) {
+      if (!mounted) return null;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Failed to load content details.',
+          ),
+        ),
+      );
+
+      return null;
+    }
+  }
+
+  // ============================================================
   // PICK IMAGE
-  // ======================================================
+  // ============================================================
 
   Future<File?> _pickImage() async {
     try {
@@ -105,12 +170,14 @@ class _AdminContentPageState extends State<AdminContentPage> {
       }
 
       return File(path);
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return null;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Unable to select the image.'),
+          content: Text(
+            'Unable to select the image.',
+          ),
         ),
       );
 
@@ -118,21 +185,29 @@ class _AdminContentPageState extends State<AdminContentPage> {
     }
   }
 
-  // ======================================================
-  // CREATE / EDIT CONTENT DIALOG
-  // ======================================================
+  // ============================================================
+  // CREATE CONTENT
+  // POST /api/admin/content
+  //
+  // EDIT CONTENT
+  // PUT /api/admin/content/:id
+  // ============================================================
 
   Future<void> _openDialog([
     Map<String, dynamic>? item,
   ]) async {
     final bool isEditing = item != null;
 
-    final titleCtrl = TextEditingController(
-      text: isEditing ? asString(item['title']) : '',
+    final titleController = TextEditingController(
+      text: isEditing
+          ? asString(item['title'])
+          : '',
     );
 
-    final descCtrl = TextEditingController(
-      text: isEditing ? asString(item['description']) : '',
+    final descriptionController = TextEditingController(
+      text: isEditing
+          ? asString(item['description'])
+          : '',
     );
 
     File? selectedFile;
@@ -151,13 +226,16 @@ class _AdminContentPageState extends State<AdminContentPage> {
             dialogCtx,
             setDialogState,
           ) {
-            final existingImage = isEditing
-                ? asString(item['image'])
-                : '';
+            final String existingImage =
+                isEditing
+                    ? asString(item['image'])
+                    : '';
 
-            final existingImageUrl =
+            final String? existingImageUrl =
                 existingImage.isNotEmpty
-                    ? ApiConfig.fileUrl(existingImage)
+                    ? ApiConfig.fileUrl(
+                        existingImage,
+                      )
                     : null;
 
             return AlertDialog(
@@ -177,12 +255,12 @@ class _AdminContentPageState extends State<AdminContentPage> {
                       crossAxisAlignment:
                           CrossAxisAlignment.start,
                       children: [
-                        // ------------------------------------
+                        // ==================================================
                         // TITLE
-                        // ------------------------------------
+                        // ==================================================
 
                         TextFormField(
-                          controller: titleCtrl,
+                          controller: titleController,
                           enabled: !saving,
                           textInputAction:
                               TextInputAction.next,
@@ -193,21 +271,23 @@ class _AdminContentPageState extends State<AdminContentPage> {
                                 'e.g. Summer Fitness Tips',
                             isDense: true,
                           ),
-                          validator: (value) =>
-                              Validators.requiredField(
-                            value,
-                            label: 'Title',
-                          ),
+                          validator: (value) {
+                            return Validators.requiredField(
+                              value,
+                              label: 'Title',
+                            );
+                          },
                         ),
 
                         const SizedBox(height: 14),
 
-                        // ------------------------------------
+                        // ==================================================
                         // DESCRIPTION
-                        // ------------------------------------
+                        // ==================================================
 
                         TextFormField(
-                          controller: descCtrl,
+                          controller:
+                              descriptionController,
                           enabled: !saving,
                           maxLines: 4,
                           decoration:
@@ -217,18 +297,19 @@ class _AdminContentPageState extends State<AdminContentPage> {
                                 'Enter content description',
                             isDense: true,
                           ),
-                          validator: (value) =>
-                              Validators.requiredField(
-                            value,
-                            label: 'Description',
-                          ),
+                          validator: (value) {
+                            return Validators.requiredField(
+                              value,
+                              label: 'Description',
+                            );
+                          },
                         ),
 
                         const SizedBox(height: 18),
 
-                        // ------------------------------------
+                        // ==================================================
                         // EXISTING IMAGE
-                        // ------------------------------------
+                        // ==================================================
 
                         if (isEditing &&
                             existingImageUrl != null) ...[
@@ -247,14 +328,16 @@ class _AdminContentPageState extends State<AdminContentPage> {
 
                           ClipRRect(
                             borderRadius:
-                                BorderRadius.circular(10),
+                                BorderRadius.circular(
+                              10,
+                            ),
                             child: SizedBox(
                               width: double.infinity,
-                              height: 160,
+                              height: 170,
                               child: NetworkImageSafe(
                                 url: existingImageUrl,
                                 width: double.infinity,
-                                height: 160,
+                                height: 170,
                               ),
                             ),
                           ),
@@ -262,11 +345,41 @@ class _AdminContentPageState extends State<AdminContentPage> {
                           const SizedBox(height: 14),
                         ],
 
-                        // ------------------------------------
+                        // ==================================================
                         // PICK IMAGE
-                        // ------------------------------------
+                        // ==================================================
 
                         OutlinedButton.icon(
+                          onPressed: saving
+                              ? null
+                              : () async {
+                                  final file =
+                                      await _pickImage();
+
+                                  if (file == null) {
+                                    return;
+                                  }
+
+                                  if (!dialogCtx
+                                      .mounted) {
+                                    return;
+                                  }
+
+                                  final fileName =
+                                      file.path
+                                          .split(
+                                            Platform
+                                                .pathSeparator,
+                                          )
+                                          .last;
+
+                                  setDialogState(() {
+                                    selectedFile =
+                                        file;
+                                    selectedFileName =
+                                        fileName;
+                                  });
+                                },
                           icon: Icon(
                             isEditing
                                 ? Icons
@@ -279,39 +392,13 @@ class _AdminContentPageState extends State<AdminContentPage> {
                                 ? 'Change Image'
                                 : 'Pick Image *',
                           ),
-                          onPressed: saving
-                              ? null
-                              : () async {
-                                  final file =
-                                      await _pickImage();
-
-                                  if (file == null) {
-                                    return;
-                                  }
-
-                                  if (!dialogCtx.mounted) {
-                                    return;
-                                  }
-
-                                  setDialogState(() {
-                                    selectedFile =
-                                        file;
-                                    selectedFileName =
-                                        file.path
-                                            .split(
-                                              Platform
-                                                  .pathSeparator,
-                                            )
-                                            .last;
-                                  });
-                                },
                         ),
 
                         const SizedBox(height: 8),
 
-                        // ------------------------------------
-                        // SELECTED FILE NAME
-                        // ------------------------------------
+                        // ==================================================
+                        // SELECTED FILE
+                        // ==================================================
 
                         if (selectedFile != null)
                           Row(
@@ -326,7 +413,9 @@ class _AdminContentPageState extends State<AdminContentPage> {
                                     .colorScheme
                                     .primary,
                               ),
+
                               const SizedBox(width: 6),
+
                               Expanded(
                                 child: Text(
                                   selectedFileName ??
@@ -339,8 +428,10 @@ class _AdminContentPageState extends State<AdminContentPage> {
                                           .last,
                                   maxLines: 2,
                                   overflow:
-                                      TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                      TextOverflow
+                                          .ellipsis,
+                                  style:
+                                      const TextStyle(
                                     fontSize: 12,
                                   ),
                                 ),
@@ -368,11 +459,11 @@ class _AdminContentPageState extends State<AdminContentPage> {
                 ),
               ),
 
-              actions: [
-                // ------------------------------------------
-                // CANCEL
-                // ------------------------------------------
+              // ============================================================
+              // ACTIONS
+              // ============================================================
 
+              actions: [
                 TextButton(
                   onPressed: saving
                       ? null
@@ -381,12 +472,10 @@ class _AdminContentPageState extends State<AdminContentPage> {
                             dialogCtx,
                           ).pop(false);
                         },
-                  child: const Text('Cancel'),
+                  child: const Text(
+                    'Cancel',
+                  ),
                 ),
-
-                // ------------------------------------------
-                // SAVE
-                // ------------------------------------------
 
                 AppButton(
                   loading: saving,
@@ -394,18 +483,18 @@ class _AdminContentPageState extends State<AdminContentPage> {
                       ? 'Save Changes'
                       : 'Upload Content',
                   onPressed: () async {
-                    // -------------------------------
-                    // VALIDATE FORM
-                    // -------------------------------
+                    // ======================================================
+                    // FORM VALIDATION
+                    // ======================================================
 
                     if (!formKey.currentState!
                         .validate()) {
                       return;
                     }
 
-                    // -------------------------------
+                    // ======================================================
                     // IMAGE REQUIRED FOR CREATE
-                    // -------------------------------
+                    // ======================================================
 
                     if (!isEditing &&
                         selectedFile == null) {
@@ -422,10 +511,6 @@ class _AdminContentPageState extends State<AdminContentPage> {
                       return;
                     }
 
-                    // -------------------------------
-                    // START SAVING
-                    // -------------------------------
-
                     setDialogState(() {
                       saving = true;
                     });
@@ -437,26 +522,35 @@ class _AdminContentPageState extends State<AdminContentPage> {
                       final fields =
                           <String, String>{
                         'title':
-                            titleCtrl.text.trim(),
+                            titleController.text
+                                .trim(),
                         'description':
-                            descCtrl.text.trim(),
+                            descriptionController
+                                .text
+                                .trim(),
                       };
 
-                      // -----------------------------
-                      // EDIT
-                      // -----------------------------
+                      // ====================================================
+                      // UPDATE
+                      // PUT /api/admin/content/:id
+                      // ====================================================
 
                       if (isEditing) {
+                        final id = asNum(
+                          item['id'],
+                        );
+
                         await api.putMultipart(
-                          '/api/admin/content/${item['id']}',
+                          '/api/admin/content/$id',
                           fields: fields,
                           file: selectedFile,
                         );
                       }
 
-                      // -----------------------------
+                      // ====================================================
                       // CREATE
-                      // -----------------------------
+                      // POST /api/admin/content
+                      // ====================================================
 
                       else {
                         await api.postMultipart(
@@ -466,12 +560,9 @@ class _AdminContentPageState extends State<AdminContentPage> {
                         );
                       }
 
-                      // IMPORTANT:
-                      //
-                      // Do NOT call setDialogState here.
-                      //
-                      // First close the dialog.
-                      // Then refresh outside the dialog.
+                      // ====================================================
+                      // CLOSE DIALOG FIRST
+                      // ====================================================
 
                       if (!dialogCtx.mounted) {
                         return;
@@ -481,11 +572,6 @@ class _AdminContentPageState extends State<AdminContentPage> {
                         dialogCtx,
                       ).pop(true);
                     } on ApiException catch (e) {
-                      // API failed.
-                      //
-                      // Dialog is still open,
-                      // so it is safe to change dialog state.
-
                       if (!dialogCtx.mounted) {
                         return;
                       }
@@ -498,10 +584,12 @@ class _AdminContentPageState extends State<AdminContentPage> {
                         context,
                       ).showSnackBar(
                         SnackBar(
-                          content: Text(e.message),
+                          content: Text(
+                            e.message,
+                          ),
                         ),
                       );
-                    } catch (e) {
+                    } catch (_) {
                       if (!dialogCtx.mounted) {
                         return;
                       }
@@ -529,30 +617,57 @@ class _AdminContentPageState extends State<AdminContentPage> {
       },
     );
 
-    // ====================================================
-    // VERY IMPORTANT
-    //
-    // Dialog is completely closed here.
-    // Now refresh the page.
-    // ====================================================
+    // ============================================================
+    // DIALOG IS CLOSED
+    // NOW REFRESH
+    // ============================================================
 
     if (saved == true && mounted) {
       await _fetchContent();
     }
 
-    // ====================================================
-    // DISPOSE CONTROLLERS AFTER DIALOG COMPLETES
-    // ====================================================
+    // ============================================================
+    // DISPOSE CONTROLLERS
+    // ============================================================
 
-    titleCtrl.dispose();
-    descCtrl.dispose();
+    titleController.dispose();
+    descriptionController.dispose();
   }
 
-  // ======================================================
-  // DELETE CONTENT
-  // ======================================================
+  // ============================================================
+  // EDIT CONTENT
+  //
+  // First call:
+  // GET /api/admin/content/:id
+  //
+  // Then PUT:
+  // PUT /api/admin/content/:id
+  // ============================================================
 
-  Future<void> _deleteContent(num id) async {
+  Future<void> _editContent(
+    Map<String, dynamic> item,
+  ) async {
+    final id = asNum(item['id']);
+
+    final content = await _getContentById(id);
+
+    if (!mounted) return;
+
+    if (content == null) {
+      return;
+    }
+
+    await _openDialog(content);
+  }
+
+  // ============================================================
+  // DELETE CONTENT
+  // DELETE /api/admin/content/:id
+  // ============================================================
+
+  Future<void> _deleteContent(
+    num id,
+  ) async {
     final bool? confirmed =
         await showDialog<bool>(
       context: context,
@@ -572,7 +687,9 @@ class _AdminContentPageState extends State<AdminContentPage> {
                   dialogContext,
                 ).pop(false);
               },
-              child: const Text('Cancel'),
+              child: const Text(
+                'Cancel',
+              ),
             ),
             FilledButton(
               style: FilledButton.styleFrom(
@@ -583,7 +700,9 @@ class _AdminContentPageState extends State<AdminContentPage> {
                   dialogContext,
                 ).pop(true);
               },
-              child: const Text('Delete'),
+              child: const Text(
+                'Delete',
+              ),
             ),
           ],
         );
@@ -617,10 +736,12 @@ class _AdminContentPageState extends State<AdminContentPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e.message),
+          content: Text(
+            e.message,
+          ),
         ),
       );
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -633,17 +754,20 @@ class _AdminContentPageState extends State<AdminContentPage> {
     }
   }
 
-  // ======================================================
+  // ============================================================
   // CONTENT CARD
-  // ======================================================
+  // ============================================================
 
   Widget _buildContentCard(
     BuildContext context,
     Map<String, dynamic> item,
   ) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
 
-    final id = asNum(item['id']);
+    final id = asNum(
+      item['id'],
+    );
 
     final title = asString(
       item['title'],
@@ -664,52 +788,83 @@ class _AdminContentPageState extends State<AdminContentPage> {
         : '';
 
     return Card(
+      elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: LayoutBuilder(
-          builder: (context, constraints) {
+          builder: (
+            context,
+            constraints,
+          ) {
             final bool small =
                 constraints.maxWidth < 600;
 
-            // ==================================================
-            // MOBILE / SMALL WIDTH
-            // ==================================================
+            // ==========================================================
+            // MOBILE
+            // ==========================================================
 
             if (small) {
               return Column(
                 crossAxisAlignment:
                     CrossAxisAlignment.start,
                 children: [
+                  // IMAGE
+
                   if (imageUrl.isNotEmpty)
                     ClipRRect(
                       borderRadius:
-                          BorderRadius.circular(10),
+                          BorderRadius.circular(
+                        10,
+                      ),
                       child: SizedBox(
                         width: double.infinity,
-                        height: 180,
+                        height: 190,
                         child: NetworkImageSafe(
                           url: imageUrl,
                           width: double.infinity,
-                          height: 180,
+                          height: 190,
                         ),
+                      ),
+                    )
+                  else
+                    Container(
+                      width: double.infinity,
+                      height: 190,
+                      decoration: BoxDecoration(
+                        color: scheme
+                            .surfaceContainerHighest,
+                        borderRadius:
+                            BorderRadius.circular(
+                          10,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons
+                            .image_not_supported_outlined,
+                        size: 40,
                       ),
                     ),
 
                   const SizedBox(height: 12),
 
+                  // TITLE
+
                   Text(
                     title,
                     style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      fontWeight:
+                          FontWeight.bold,
+                      fontSize: 17,
                     ),
                   ),
 
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 6),
+
+                  // DESCRIPTION
 
                   Text(
                     description,
-                    maxLines: 3,
+                    maxLines: 4,
                     overflow:
                         TextOverflow.ellipsis,
                     style: TextStyle(
@@ -723,26 +878,30 @@ class _AdminContentPageState extends State<AdminContentPage> {
 
                   const SizedBox(height: 10),
 
+                  // ACTIONS
+
                   Row(
                     mainAxisAlignment:
                         MainAxisAlignment.end,
                     children: [
                       IconButton(
                         tooltip: 'Edit',
-                        icon: const Icon(
-                          Icons.edit_outlined,
-                        ),
                         onPressed: () =>
-                            _openDialog(item),
+                            _editContent(item),
+                        icon: const Icon(
+                          Icons
+                              .edit_outlined,
+                        ),
                       ),
                       IconButton(
                         tooltip: 'Delete',
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          color: Colors.red,
-                        ),
                         onPressed: () =>
                             _deleteContent(id),
+                        icon: const Icon(
+                          Icons
+                              .delete_outline,
+                          color: Colors.red,
+                        ),
                       ),
                     ],
                   ),
@@ -750,33 +909,32 @@ class _AdminContentPageState extends State<AdminContentPage> {
               );
             }
 
-            // ==================================================
-            // DESKTOP / LARGE WIDTH
-            // ==================================================
+            // ==========================================================
+            // DESKTOP
+            // ==========================================================
 
             return Row(
               crossAxisAlignment:
                   CrossAxisAlignment.center,
               children: [
-                // ----------------------------------------------
                 // IMAGE
-                // ----------------------------------------------
 
                 ClipRRect(
                   borderRadius:
-                      BorderRadius.circular(10),
+                      BorderRadius.circular(
+                    10,
+                  ),
                   child: SizedBox(
-                    width: 100,
-                    height: 100,
+                    width: 110,
+                    height: 110,
                     child: imageUrl.isNotEmpty
                         ? NetworkImageSafe(
                             url: imageUrl,
-                            width: 100,
-                            height: 100,
+                            width: 110,
+                            height: 110,
                           )
                         : Container(
-                            color: theme
-                                .colorScheme
+                            color: scheme
                                 .surfaceContainerHighest,
                             child: const Icon(
                               Icons
@@ -788,9 +946,7 @@ class _AdminContentPageState extends State<AdminContentPage> {
 
                 const SizedBox(width: 16),
 
-                // ----------------------------------------------
                 // TEXT
-                // ----------------------------------------------
 
                 Expanded(
                   child: Column(
@@ -799,18 +955,19 @@ class _AdminContentPageState extends State<AdminContentPage> {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style:
+                            const TextStyle(
                           fontWeight:
                               FontWeight.bold,
-                          fontSize: 16,
+                          fontSize: 17,
                         ),
                       ),
 
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 6),
 
                       Text(
                         description,
-                        maxLines: 3,
+                        maxLines: 4,
                         overflow:
                             TextOverflow.ellipsis,
                         style: TextStyle(
@@ -827,31 +984,27 @@ class _AdminContentPageState extends State<AdminContentPage> {
 
                 const SizedBox(width: 12),
 
-                // ----------------------------------------------
                 // EDIT
-                // ----------------------------------------------
 
                 IconButton(
                   tooltip: 'Edit',
+                  onPressed: () =>
+                      _editContent(item),
                   icon: const Icon(
                     Icons.edit_outlined,
                   ),
-                  onPressed: () =>
-                      _openDialog(item),
                 ),
 
-                // ----------------------------------------------
                 // DELETE
-                // ----------------------------------------------
 
                 IconButton(
                   tooltip: 'Delete',
+                  onPressed: () =>
+                      _deleteContent(id),
                   icon: const Icon(
                     Icons.delete_outline,
                     color: Colors.red,
                   ),
-                  onPressed: () =>
-                      _deleteContent(id),
                 ),
               ],
             );
@@ -861,148 +1014,297 @@ class _AdminContentPageState extends State<AdminContentPage> {
     );
   }
 
-  // ======================================================
+  // ============================================================
+  // EMPTY STATE
+  // ============================================================
+
+  Widget _buildEmptyState(
+    BuildContext context,
+  ) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 24,
+          vertical: 40,
+        ),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(
+                Icons
+                    .photo_library_outlined,
+                size: 52,
+                color: scheme.primary,
+              ),
+
+              const SizedBox(height: 14),
+
+              Text(
+                'No gallery content published yet.',
+                textAlign: TextAlign.center,
+                style: theme
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(
+                  fontWeight:
+                      FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              Text(
+                'Click "Upload Post" above to create the first gallery content.',
+                textAlign: TextAlign.center,
+                style: theme
+                    .textTheme
+                    .bodyMedium,
+              ),
+
+              const SizedBox(height: 18),
+
+              AppButton(
+                label: 'Upload First Post',
+                icon: Icons
+                    .add_photo_alternate_outlined,
+                onPressed: () =>
+                    _openDialog(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // ERROR STATE
+  // ============================================================
+
+  Widget _buildErrorState(
+    BuildContext context,
+  ) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 42,
+              color: Colors.red,
+            ),
+
+            const SizedBox(height: 10),
+
+            Text(
+              _error ??
+                  'Failed to load content.',
+              textAlign: TextAlign.center,
+              style: theme
+                  .textTheme
+                  .bodyMedium,
+            ),
+
+            const SizedBox(height: 14),
+
+            OutlinedButton.icon(
+              onPressed: _fetchContent,
+              icon: const Icon(
+                Icons.refresh,
+              ),
+              label: const Text(
+                'Retry',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
   // BUILD
-  // ======================================================
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     final padding =
         Responsive.pagePadding(context);
 
-    return AsyncStateView(
-      loading: _loading,
-      error: _error,
-      onRetry: _fetchContent,
-      isEmpty: _items.isEmpty,
-      emptyMessage:
-          'No gallery content published yet.',
-      child: SingleChildScrollView(
-        padding: EdgeInsets.all(padding),
-        child: Center(
-          child: ConstrainedBox(
-            constraints:
-                const BoxConstraints(
-              maxWidth: 1000,
-            ),
-            child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
-              children: [
-                // ==================================================
-                // HEADER
-                // ==================================================
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(padding),
+      child: Center(
+        child: ConstrainedBox(
+          constraints:
+              const BoxConstraints(
+            maxWidth: 1000,
+          ),
+          child: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              // ========================================================
+              // HEADER
+              // ========================================================
 
-                LayoutBuilder(
-                  builder: (
-                    context,
-                    constraints,
-                  ) {
-                    final bool small =
-                        constraints.maxWidth < 650;
+              LayoutBuilder(
+                builder: (
+                  context,
+                  constraints,
+                ) {
+                  final bool small =
+                      constraints.maxWidth < 650;
 
-                    if (small) {
-                      return Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment
-                                .start,
-                        children: [
-                          Text(
-                            'Public Gallery & Content',
-                            style: theme
-                                .textTheme
-                                .headlineMedium
-                                ?.copyWith(
-                              fontWeight:
-                                  FontWeight.bold,
-                            ),
-                          ),
-
-                          const SizedBox(height: 5),
-
-                          const Text(
-                            'Upload photos and posts displayed on the landing page gallery.',
-                          ),
-
-                          const SizedBox(height: 14),
-
-                          AppButton(
-                            label: 'Upload Post',
-                            icon: Icons
-                                .add_photo_alternate_outlined,
-                            onPressed:
-                                () => _openDialog(),
-                          ),
-                        ],
-                      );
-                    }
-
-                    return Row(
+                  if (small) {
+                    return Column(
                       crossAxisAlignment:
-                          CrossAxisAlignment
-                              .center,
+                          CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment
-                                    .start,
-                            children: [
-                              Text(
-                                'Public Gallery & Content',
-                                style: theme
-                                    .textTheme
-                                    .headlineMedium
-                                    ?.copyWith(
-                                  fontWeight:
-                                      FontWeight
-                                          .bold,
-                                ),
-                              ),
-
-                              const SizedBox(
-                                height: 5,
-                              ),
-
-                              const Text(
-                                'Upload photos and posts displayed on the landing page gallery.',
-                              ),
-                            ],
+                        Text(
+                          'Public Gallery & Content',
+                          style: theme
+                              .textTheme
+                              .headlineMedium
+                              ?.copyWith(
+                            fontWeight:
+                                FontWeight.bold,
                           ),
                         ),
 
-                        const SizedBox(width: 16),
+                        const SizedBox(height: 5),
+
+                        const Text(
+                          'Upload photos and posts displayed on the landing page gallery.',
+                        ),
+
+                        const SizedBox(height: 14),
+
+                        // ==================================================
+                        // THIS BUTTON ALWAYS SHOWS
+                        // EVEN WHEN DATABASE IS EMPTY
+                        // ==================================================
 
                         AppButton(
                           label: 'Upload Post',
                           icon: Icons
                               .add_photo_alternate_outlined,
-                          onPressed:
-                              () => _openDialog(),
+                          onPressed: () =>
+                              _openDialog(),
                         ),
                       ],
                     );
-                  },
-                ),
+                  }
 
-                const SizedBox(height: 24),
+                  return Row(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment
+                                  .start,
+                          children: [
+                            Text(
+                              'Public Gallery & Content',
+                              style: theme
+                                  .textTheme
+                                  .headlineMedium
+                                  ?.copyWith(
+                                fontWeight:
+                                    FontWeight.bold,
+                              ),
+                            ),
 
-                // ==================================================
-                // CONTENT LIST
-                // ==================================================
+                            const SizedBox(
+                              height: 5,
+                            ),
 
+                            const Text(
+                              'Upload photos and posts displayed on the landing page gallery.',
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(
+                        width: 16,
+                      ),
+
+                      // ==================================================
+                      // CREATE BUTTON
+                      // ==================================================
+
+                      AppButton(
+                        label: 'Upload Post',
+                        icon: Icons
+                            .add_photo_alternate_outlined,
+                        onPressed: () =>
+                            _openDialog(),
+                      ),
+                    ],
+                  );
+                },
+              ),
+
+              const SizedBox(height: 24),
+
+              // ==========================================================
+              // LOADING
+              // ==========================================================
+
+              if (_loading)
+                const Center(
+                  child: Padding(
+                    padding:
+                        EdgeInsets.all(40),
+                    child:
+                        CircularProgressIndicator(),
+                  ),
+                )
+
+              // ==========================================================
+              // ERROR
+              // ==========================================================
+
+              else if (_error != null)
+                _buildErrorState(
+                  context,
+                )
+
+              // ==========================================================
+              // DATABASE EMPTY
+              //
+              // IMPORTANT:
+              // HEADER + UPLOAD BUTTON ARE STILL VISIBLE
+              // ==========================================================
+
+              else if (_items.isEmpty)
+                _buildEmptyState(
+                  context,
+                )
+
+              // ==========================================================
+              // CONTENT EXISTS
+              // ==========================================================
+
+              else
                 ListView.separated(
                   shrinkWrap: true,
                   physics:
                       const NeverScrollableScrollPhysics(),
-                  itemCount: _items.length,
-                  separatorBuilder: (
-                    _,
-                    __,
-                  ) =>
-                      const SizedBox(
+                  itemCount:
+                      _items.length,
+                  separatorBuilder:
+                      (_, __) =>
+                          const SizedBox(
                     height: 14,
                   ),
                   itemBuilder: (
@@ -1016,9 +1318,8 @@ class _AdminContentPageState extends State<AdminContentPage> {
                   },
                 ),
 
-                const SizedBox(height: 24),
-              ],
-            ),
+              const SizedBox(height: 24),
+            ],
           ),
         ),
       ),
