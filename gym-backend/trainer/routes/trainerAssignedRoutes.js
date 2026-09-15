@@ -10,6 +10,10 @@ const {
     getAssignedMemberProfileController
 } = require('../controller/trainerAssignedController');
 
+const {
+    getTrainerExercisesController
+} = require('../controller/trainerExerciseController');
+
 
 // ==========================================
 // GET ALL MEMBERS ASSIGNED TO TRAINER
@@ -20,6 +24,13 @@ router.get(
     authMiddleware,
     roleMiddleware('TRAINER'),
     getAssignedMembersController
+);
+
+router.get(
+    '/exercises',
+    authMiddleware,
+    roleMiddleware('TRAINER'),
+    getTrainerExercisesController
 );
 
 

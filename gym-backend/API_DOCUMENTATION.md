@@ -4292,7 +4292,7 @@ POST /api/admin/challenges
 
 auth = Bearer JWT
 
-role = ADMIN
+role = ADMIN    
 
 access = ADMIN only
 
