@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/json_helpers.dart';
 import '../../utils/responsive.dart';
-import '../../widgets/common/app_widgets.dart';
 
 class TrainerChatPage extends StatefulWidget {
   const TrainerChatPage({super.key});
@@ -46,7 +45,16 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
   }
 
   // ============================================================
-  // LOAD MEMBERS WITH CONVERSATIONS
+  // LOAD ASSIGNED MEMBERS
+  // ============================================================
+  //
+  // IMPORTANT:
+  // We use /api/trainer/assigned-members here.
+  //
+  // Do NOT use /api/trainer/messages for the member list because
+  // that may return only members who already started a chat.
+  //
+  // Trainer must be able to start a new conversation.
   // ============================================================
 
   Future<void> _fetchMembers() async {
@@ -61,19 +69,19 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
       final api = context.read<ApiService>();
 
       final response = await api.get(
-        '/api/trainer/messages',
+        '/api/trainer/assigned-members',
       );
-
-      if (!mounted) return;
 
       final members = _extractMembers(response);
 
+      if (!mounted) return;
+
       Map<String, dynamic>? selected;
 
+      // Try to keep currently selected member.
       if (_selectedMember != null) {
-        final selectedId = _idString(
-          _selectedMember!['id'],
-        );
+        final selectedId =
+            _idString(_selectedMember!['id']);
 
         for (final member in members) {
           if (_idString(member['id']) == selectedId) {
@@ -83,9 +91,9 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
         }
       }
 
-      selected ??= members.isNotEmpty
-          ? members.first
-          : null;
+      // If no previous selection, select first member.
+      selected ??=
+          members.isNotEmpty ? members.first : null;
 
       setState(() {
         _members = members;
@@ -94,11 +102,19 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
         _error = null;
       });
 
+      // Load conversation if a member exists.
       if (selected != null) {
         await _loadConversation(
           selected,
           showLoading: true,
         );
+      } else {
+        if (!mounted) return;
+
+        setState(() {
+          _messages = [];
+          _conversationLoading = false;
+        });
       }
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -112,7 +128,7 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
 
       setState(() {
         _loading = false;
-        _error = 'Failed to load conversations.';
+        _error = 'Failed to load assigned members.';
       });
     }
   }
@@ -129,13 +145,15 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
     }
 
     if (response is Map) {
-      final dynamic members = response['members'];
+      final dynamic members =
+          response['members'];
 
       if (members is List) {
         return asMapList(members);
       }
 
-      final dynamic data = response['data'];
+      final dynamic data =
+          response['data'];
 
       if (data is List) {
         return asMapList(data);
@@ -180,6 +198,7 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
 
       setState(() {
         _conversationLoading = false;
+        _messages = [];
       });
 
       return;
@@ -200,9 +219,10 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
         '/api/trainer/messages/$memberId',
       );
 
-      if (!mounted) return;
+      final messages =
+          _extractMessages(response);
 
-      final messages = _extractMessages(response);
+      if (!mounted) return;
 
       setState(() {
         _messages = messages;
@@ -255,16 +275,11 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
     }
 
     if (response is Map) {
-      final dynamic messages = response['messages'];
+      final dynamic messages =
+          response['messages'];
 
       if (messages is List) {
         return asMapList(messages);
-      }
-
-      final dynamic data = response['data'];
-
-      if (data is List) {
-        return asMapList(data);
       }
 
       final dynamic conversation =
@@ -273,13 +288,20 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
       if (conversation is List) {
         return asMapList(conversation);
       }
+
+      final dynamic data =
+          response['data'];
+
+      if (data is List) {
+        return asMapList(data);
+      }
     }
 
     return [];
   }
 
   // ============================================================
-  // MARK RECEIVED MESSAGES AS READ
+  // MARK UNREAD MESSAGES AS READ
   // ============================================================
 
   Future<void> _markUnreadMessagesAsRead(
@@ -298,32 +320,31 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
         continue;
       }
 
-      final isRead = _isMessageRead(
-        message,
-      );
+      final isRead =
+          _isMessageRead(message);
 
-      // Only mark trainee/member messages as read.
-      if (senderRole == 'MEMBER' && !isRead) {
+      if (senderRole == 'MEMBER' &&
+          !isRead) {
         try {
           await api.put(
             '/api/trainer/messages/$messageId/read',
           );
         } catch (_) {
-          // Do not break the conversation if
-          // marking read fails.
+          // Ignore read-status failure.
         }
       }
     }
   }
 
   // ============================================================
-  // MESSAGE READ CHECK
+  // READ CHECK
   // ============================================================
 
   bool _isMessageRead(
     Map<String, dynamic> message,
   ) {
-    final value = message['is_read'];
+    final value =
+        message['is_read'];
 
     if (value == null) {
       return false;
@@ -351,7 +372,8 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
     final text =
         _messageController.text.trim();
 
-    final selectedMember = _selectedMember;
+    final selectedMember =
+        _selectedMember;
 
     if (text.isEmpty ||
         selectedMember == null ||
@@ -359,7 +381,8 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
       return;
     }
 
-    final memberId = selectedMember['id'];
+    final memberId =
+        selectedMember['id'];
 
     if (memberId == null) {
       return;
@@ -372,7 +395,8 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
     });
 
     try {
-      final api = context.read<ApiService>();
+      final api =
+          context.read<ApiService>();
 
       await api.post(
         '/api/trainer/messages/$memberId',
@@ -387,13 +411,13 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
 
       await _loadConversation(
         selectedMember,
+        showLoading: false,
       );
-
-      await _fetchMembersSilently();
     } on ApiException catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
         SnackBar(
           content: Text(e.message),
         ),
@@ -401,7 +425,8 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
     } catch (_) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
         const SnackBar(
           content: Text(
             'Failed to send message.',
@@ -418,37 +443,15 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
   }
 
   // ============================================================
-  // REFRESH MEMBERS WITHOUT FULL SCREEN LOADING
-  // ============================================================
-
-  Future<void> _fetchMembersSilently() async {
-    try {
-      final api = context.read<ApiService>();
-
-      final response = await api.get(
-        '/api/trainer/messages',
-      );
-
-      if (!mounted) return;
-
-      final members = _extractMembers(response);
-
-      setState(() {
-        _members = members;
-      });
-    } catch (_) {
-      // Keep current UI if sidebar refresh fails.
-    }
-  }
-
-  // ============================================================
   // SCROLL TO BOTTOM
   // ============================================================
 
   void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback(
+    WidgetsBinding.instance
+        .addPostFrameCallback(
       (_) {
-        if (!_messageScrollController.hasClients) {
+        if (!_messageScrollController
+            .hasClients) {
           return;
         }
 
@@ -456,7 +459,8 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
           _messageScrollController
               .position
               .maxScrollExtent,
-          duration: const Duration(
+          duration:
+              const Duration(
             milliseconds: 250,
           ),
           curve: Curves.easeOut,
@@ -466,7 +470,7 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
   }
 
   // ============================================================
-  // SAFE ID STRING
+  // ID HELPER
   // ============================================================
 
   String _idString(dynamic value) {
@@ -476,44 +480,139 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
   // ============================================================
   // BUILD
   // ============================================================
+  //
+  // IMPORTANT:
+  // NO AsyncStateView around the whole page.
+  //
+  // Even when there are zero members, the page itself remains
+  // visible.
+  // ============================================================
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget build(
+    BuildContext context,
+  ) {
+    final theme =
+        Theme.of(context);
+
     final padding =
-        Responsive.pagePadding(context);
+        Responsive.pagePadding(
+      context,
+    );
 
-    return AsyncStateView(
-      loading: _loading,
-      error: _error,
-      onRetry: _fetchMembers,
-      isEmpty: _members.isEmpty,
-      emptyMessage:
-          'No trainees have initiated a chat yet.',
-      child: RefreshIndicator(
-        onRefresh: _fetchMembers,
-        child: Padding(
-          padding: EdgeInsets.all(padding),
-          child: LayoutBuilder(
-            builder: (
-              context,
-              constraints,
-            ) {
-              final isMobile =
-                  constraints.maxWidth < 750;
+    return RefreshIndicator(
+      onRefresh: _fetchMembers,
+      child: SingleChildScrollView(
+        physics:
+            const AlwaysScrollableScrollPhysics(),
+        padding:
+            EdgeInsets.all(padding),
+        child: Center(
+          child: ConstrainedBox(
+            constraints:
+                const BoxConstraints(
+              maxWidth: 1100,
+            ),
+            child: Column(
+              children: [
+                // ======================================================
+                // ERROR
+                // ======================================================
 
-              return Center(
-                child: ConstrainedBox(
-                  constraints:
-                      const BoxConstraints(
-                    maxWidth: 1100,
+                if (_error != null) ...[
+                  Card(
+                    child: Padding(
+                      padding:
+                          const EdgeInsets.all(
+                        16,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons
+                                .error_outline,
+                            color:
+                                theme
+                                    .colorScheme
+                                    .error,
+                          ),
+                          const SizedBox(
+                            width: 12,
+                          ),
+                          Expanded(
+                            child: Text(
+                              _error!,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed:
+                                _fetchMembers,
+                            icon:
+                                const Icon(
+                              Icons.refresh,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  child: isMobile
-                      ? _buildMobileLayout(theme)
-                      : _buildDesktopLayout(theme),
-                ),
-              );
-            },
+                  const SizedBox(
+                    height: 12,
+                  ),
+                ],
+
+                // ======================================================
+                // LOADING
+                // ======================================================
+
+                if (_loading)
+                  const Padding(
+                    padding:
+                        EdgeInsets.all(40),
+                    child: Center(
+                      child:
+                          CircularProgressIndicator(),
+                    ),
+                  ),
+
+                // ======================================================
+                // EMPTY ASSIGNED MEMBERS
+                // ======================================================
+
+                if (!_loading &&
+                    _error == null &&
+                    _members.isEmpty)
+                  _buildNoMembersState(
+                    theme,
+                  ),
+
+                // ======================================================
+                // CHAT UI
+                // ======================================================
+
+                if (!_loading &&
+                    _members.isNotEmpty)
+                  LayoutBuilder(
+                    builder:
+                        (
+                      context,
+                      constraints,
+                    ) {
+                      final isMobile =
+                          constraints.maxWidth <
+                              750;
+
+                      return isMobile
+                          ? _buildMobileLayout(
+                              theme,
+                            )
+                          : _buildDesktopLayout(
+                              theme,
+                            );
+                    },
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -521,7 +620,70 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
   }
 
   // ============================================================
-  // DESKTOP LAYOUT
+  // NO ASSIGNED MEMBERS
+  // ============================================================
+
+  Widget _buildNoMembersState(
+    ThemeData theme,
+  ) {
+    return Card(
+      child: Padding(
+        padding:
+            const EdgeInsets.all(32),
+        child: Column(
+          children: [
+            Icon(
+              Icons.people_outline,
+              size: 60,
+              color:
+                  theme.colorScheme.primary,
+            ),
+            const SizedBox(
+              height: 14,
+            ),
+            Text(
+              'No assigned members yet.',
+              style: theme
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(
+                fontWeight:
+                    FontWeight.bold,
+              ),
+              textAlign:
+                  TextAlign.center,
+            ),
+            const SizedBox(
+              height: 8,
+            ),
+            const Text(
+              'Admin must assign members to you before you can start a conversation.',
+              textAlign:
+                  TextAlign.center,
+            ),
+            const SizedBox(
+              height: 18,
+            ),
+            OutlinedButton.icon(
+              onPressed:
+                  _fetchMembers,
+              icon:
+                  const Icon(
+                Icons.refresh,
+              ),
+              label:
+                  const Text(
+                'Refresh',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // DESKTOP
   // ============================================================
 
   Widget _buildDesktopLayout(
@@ -530,12 +692,14 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
     return SizedBox(
       height: 680,
       child: Card(
-        clipBehavior: Clip.antiAlias,
+        clipBehavior:
+            Clip.antiAlias,
         child: Row(
           children: [
             SizedBox(
               width: 290,
-              child: _buildMemberSidebar(
+              child:
+                  _buildMemberSidebar(
                 theme,
               ),
             ),
@@ -543,7 +707,8 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
               width: 1,
             ),
             Expanded(
-              child: _buildConversationArea(
+              child:
+                  _buildConversationArea(
                 theme,
               ),
             ),
@@ -554,7 +719,7 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
   }
 
   // ============================================================
-  // MOBILE LAYOUT
+  // MOBILE
   // ============================================================
 
   Widget _buildMobileLayout(
@@ -562,13 +727,19 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
   ) {
     return Column(
       children: [
-        _buildMobileMemberSelector(theme),
-        const SizedBox(height: 12),
+        _buildMobileMemberSelector(
+          theme,
+        ),
+        const SizedBox(
+          height: 12,
+        ),
         SizedBox(
           height: 650,
           child: Card(
-            clipBehavior: Clip.antiAlias,
-            child: _buildConversationArea(
+            clipBehavior:
+                Clip.antiAlias,
+            child:
+                _buildConversationArea(
               theme,
             ),
           ),
@@ -584,63 +755,89 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
   Widget _buildMobileMemberSelector(
     ThemeData theme,
   ) {
-    final scheme = theme.colorScheme;
+    final scheme =
+        theme.colorScheme;
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding:
+            const EdgeInsets.all(14),
         child: Row(
           children: [
             CircleAvatar(
               backgroundColor:
-                  scheme.primary.withValues(
-                alpha: 0.10,
-              ),
+                  scheme.primary
+                      .withOpacity(0.10),
               child: Icon(
                 Icons.people,
-                color: scheme.primary,
+                color:
+                    scheme.primary,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(
+              width: 12,
+            ),
             Expanded(
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<Map<String, dynamic>>(
-                  isExpanded: true,
-                  value: _selectedMember,
-                  hint: const Text(
-                    'Select trainee',
+              child:
+                  DropdownButtonHideUnderline(
+                child:
+                    DropdownButton<
+                        Map<String,
+                            dynamic>>(
+                  isExpanded:
+                      true,
+                  value:
+                      _selectedMember,
+                  hint:
+                      const Text(
+                    'Select member',
                   ),
-                  items: _members.map(
+                  items:
+                      _members.map(
                     (member) {
-                      final name = asString(
-                        member['name'],
-                        'Trainee',
+                      final name =
+                          asString(
+                        member[
+                            'name'],
+                        'Member',
                       );
 
                       return DropdownMenuItem<
-                          Map<String, dynamic>>(
-                        value: member,
-                        child: Text(
+                          Map<String,
+                              dynamic>>(
+                        value:
+                            member,
+                        child:
+                            Text(
                           name,
                           overflow:
-                              TextOverflow.ellipsis,
+                              TextOverflow
+                                  .ellipsis,
                         ),
                       );
                     },
                   ).toList(),
-                  onChanged: (member) {
-                    if (member != null) {
-                      _selectMember(member);
+                  onChanged:
+                      (member) {
+                    if (member !=
+                        null) {
+                      _selectMember(
+                        member,
+                      );
                     }
                   },
                 ),
               ),
             ),
             IconButton(
-              tooltip: 'Refresh',
+              tooltip:
+                  'Refresh',
               onPressed:
-                  _loading ? null : _fetchMembers,
-              icon: const Icon(
+                  _loading
+                      ? null
+                      : _fetchMembers,
+              icon:
+                  const Icon(
                 Icons.refresh,
               ),
             ),
@@ -657,72 +854,86 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
   Widget _buildMemberSidebar(
     ThemeData theme,
   ) {
-    final scheme = theme.colorScheme;
+    final scheme =
+        theme.colorScheme;
 
     return Column(
       crossAxisAlignment:
           CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.all(16),
+          padding:
+              const EdgeInsets.all(16),
           color: scheme
               .surfaceContainerHighest
-              .withValues(alpha: 0.5),
+              .withOpacity(0.5),
           child: Row(
             children: [
               Expanded(
                 child: Text(
-                  'Trainees',
-                  style: theme.textTheme.titleMedium
+                  'Assigned Members',
+                  style: theme
+                      .textTheme
+                      .titleMedium
                       ?.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight:
+                        FontWeight.bold,
                   ),
                 ),
               ),
               IconButton(
-                tooltip: 'Refresh',
-                icon: const Icon(
+                tooltip:
+                    'Refresh',
+                icon:
+                    const Icon(
                   Icons.refresh,
                   size: 20,
                 ),
                 onPressed:
-                    _loading ? null : _fetchMembers,
+                    _loading
+                        ? null
+                        : _fetchMembers,
               ),
             ],
           ),
         ),
-        const Divider(height: 1),
+        const Divider(
+          height: 1,
+        ),
         Expanded(
-          child: _members.isEmpty
-              ? const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text(
-                      'No conversations yet.',
-                      textAlign: TextAlign.center,
+          child:
+              _members.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No assigned members.',
+                        textAlign:
+                            TextAlign
+                                .center,
+                      ),
+                    )
+                  : ListView.separated(
+                      itemCount:
+                          _members.length,
+                      separatorBuilder:
+                          (
+                        _,
+                        __,
+                      ) =>
+                              const Divider(
+                        height: 1,
+                      ),
+                      itemBuilder:
+                          (
+                        context,
+                        index,
+                      ) {
+                        return _buildMemberTile(
+                          theme,
+                          _members[
+                              index],
+                        );
+                      },
                     ),
-                  ),
-                )
-              : ListView.separated(
-                  itemCount: _members.length,
-                  separatorBuilder: (
-                    _,
-                    __,
-                  ) =>
-                      const Divider(height: 1),
-                  itemBuilder: (
-                    context,
-                    index,
-                  ) {
-                    final member =
-                        _members[index];
-
-                    return _buildMemberTile(
-                      theme,
-                      member,
-                    );
-                  },
-                ),
         ),
       ],
     );
@@ -736,23 +947,28 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
     ThemeData theme,
     Map<String, dynamic> member,
   ) {
-    final scheme = theme.colorScheme;
+    final scheme =
+        theme.colorScheme;
 
     final isSelected =
-        _selectedMember != null &&
+        _selectedMember !=
+                null &&
             _idString(
-                  _selectedMember!['id'],
+                  _selectedMember![
+                      'id'],
                 ) ==
                 _idString(
                   member['id'],
                 );
 
-    final name = asString(
+    final name =
+        asString(
       member['name'],
-      'Trainee',
+      'Member',
     );
 
-    final email = asString(
+    final email =
+        asString(
       member['email'],
       '',
     );
@@ -762,9 +978,13 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
           ? scheme.primaryContainer
           : Colors.transparent,
       child: InkWell(
-        onTap: () => _selectMember(member),
+        onTap: () =>
+            _selectMember(
+          member,
+        ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
+          padding:
+              const EdgeInsets.symmetric(
             horizontal: 14,
             vertical: 12,
           ),
@@ -773,45 +993,62 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
               CircleAvatar(
                 radius: 20,
                 backgroundColor:
-                    scheme.primary.withValues(
-                  alpha: 0.12,
+                    scheme.primary
+                        .withOpacity(
+                  0.12,
                 ),
                 child: Text(
                   name.isNotEmpty
-                      ? name[0].toUpperCase()
-                      : 'T',
-                  style: TextStyle(
-                    color: scheme.primary,
-                    fontWeight: FontWeight.bold,
+                      ? name[0]
+                          .toUpperCase()
+                      : 'M',
+                  style:
+                      TextStyle(
+                    color:
+                        scheme.primary,
+                    fontWeight:
+                        FontWeight
+                            .bold,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(
+                width: 12,
+              ),
               Expanded(
                 child: Column(
                   crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                      CrossAxisAlignment
+                          .start,
                   children: [
                     Text(
                       name,
                       maxLines: 1,
                       overflow:
-                          TextOverflow.ellipsis,
-                      style: const TextStyle(
+                          TextOverflow
+                              .ellipsis,
+                      style:
+                          const TextStyle(
                         fontWeight:
-                            FontWeight.w600,
+                            FontWeight
+                                .w600,
                         fontSize: 14,
                       ),
                     ),
-                    if (email.isNotEmpty) ...[
-                      const SizedBox(height: 3),
+                    if (email
+                        .isNotEmpty) ...[
+                      const SizedBox(
+                        height: 3,
+                      ),
                       Text(
                         email,
                         maxLines: 1,
                         overflow:
-                            TextOverflow.ellipsis,
+                            TextOverflow
+                                .ellipsis,
                         style: theme
-                            .textTheme.bodySmall
+                            .textTheme
+                            .bodySmall
                             ?.copyWith(
                           fontSize: 12,
                         ),
@@ -834,13 +1071,16 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
   Widget _buildConversationArea(
     ThemeData theme,
   ) {
-    if (_selectedMember == null) {
+    if (_selectedMember ==
+        null) {
       return const Center(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding:
+              EdgeInsets.all(24),
           child: Text(
-            'Select a trainee to view and send messages.',
-            textAlign: TextAlign.center,
+            'Select a member to start chatting.',
+            textAlign:
+                TextAlign.center,
           ),
         ),
       );
@@ -848,13 +1088,24 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
 
     return Column(
       children: [
-        _buildConversationHeader(theme),
-        const Divider(height: 1),
-        Expanded(
-          child: _buildMessagesArea(theme),
+        _buildConversationHeader(
+          theme,
         ),
-        const Divider(height: 1),
-        _buildMessageInput(theme),
+        const Divider(
+          height: 1,
+        ),
+        Expanded(
+          child:
+              _buildMessagesArea(
+            theme,
+          ),
+        ),
+        const Divider(
+          height: 1,
+        ),
+        _buildMessageInput(
+          theme,
+        ),
       ],
     );
   }
@@ -866,85 +1117,106 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
   Widget _buildConversationHeader(
     ThemeData theme,
   ) {
-    final scheme = theme.colorScheme;
+    final scheme =
+        theme.colorScheme;
 
-    final name = asString(
+    final name =
+        asString(
       _selectedMember!['name'],
-      'Trainee',
+      'Member',
     );
 
-    final email = asString(
+    final email =
+        asString(
       _selectedMember!['email'],
       '',
     );
 
     return Container(
-      padding: const EdgeInsets.symmetric(
+      padding:
+          const EdgeInsets.symmetric(
         horizontal: 18,
         vertical: 14,
       ),
       color: scheme
           .surfaceContainerHighest
-          .withValues(alpha: 0.3),
+          .withOpacity(0.3),
       child: Row(
         children: [
           CircleAvatar(
             radius: 20,
-            backgroundColor: scheme.primary,
-            child: const Icon(
+            backgroundColor:
+                scheme.primary,
+            child:
+                const Icon(
               Icons.person,
               color: Colors.white,
               size: 21,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(
+            width: 12,
+          ),
           Expanded(
             child: Column(
               crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                  CrossAxisAlignment
+                      .start,
               children: [
                 Text(
                   name,
                   maxLines: 1,
                   overflow:
-                      TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
+                      TextOverflow
+                          .ellipsis,
+                  style:
+                      const TextStyle(
+                    fontWeight:
+                        FontWeight.bold,
                     fontSize: 16,
                   ),
                 ),
-                if (email.isNotEmpty)
+                if (email
+                    .isNotEmpty)
                   Text(
                     email,
                     maxLines: 1,
                     overflow:
-                        TextOverflow.ellipsis,
+                        TextOverflow
+                            .ellipsis,
                     style: theme
-                        .textTheme.bodySmall,
+                        .textTheme
+                        .bodySmall,
                   ),
               ],
             ),
           ),
           IconButton(
-            tooltip: 'Refresh conversation',
-            onPressed: _conversationLoading
-                ? null
-                : () => _loadConversation(
+            tooltip:
+                'Refresh conversation',
+            onPressed:
+                _conversationLoading
+                    ? null
+                    : () =>
+                        _loadConversation(
                       _selectedMember!,
-                      showLoading: true,
+                      showLoading:
+                          true,
                     ),
-            icon: _conversationLoading
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child:
-                        CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Icon(
-                    Icons.refresh,
-                  ),
+            icon:
+                _conversationLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child:
+                            CircularProgressIndicator(
+                          strokeWidth:
+                              2,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.refresh,
+                      ),
           ),
         ],
       ),
@@ -961,36 +1233,40 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
     if (_conversationLoading &&
         _messages.isEmpty) {
       return const Center(
-        child: CircularProgressIndicator(),
+        child:
+            CircularProgressIndicator(),
       );
     }
 
     if (_messages.isEmpty) {
       return const Center(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding:
+              EdgeInsets.all(24),
           child: Text(
-            'No messages yet in this conversation.',
-            textAlign: TextAlign.center,
+            'No messages yet.\nSend the first message to this member.',
+            textAlign:
+                TextAlign.center,
           ),
         ),
       );
     }
 
     return ListView.builder(
-      controller: _messageScrollController,
-      padding: const EdgeInsets.all(16),
-      itemCount: _messages.length,
-      itemBuilder: (
+      controller:
+          _messageScrollController,
+      padding:
+          const EdgeInsets.all(16),
+      itemCount:
+          _messages.length,
+      itemBuilder:
+          (
         context,
         index,
       ) {
-        final message =
-            _messages[index];
-
         return _buildMessageBubble(
           theme,
-          message,
+          _messages[index],
         );
       },
     );
@@ -1004,21 +1280,25 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
     ThemeData theme,
     Map<String, dynamic> message,
   ) {
-    final scheme = theme.colorScheme;
+    final scheme =
+        theme.colorScheme;
 
-    final text = asString(
+    final text =
+        asString(
       message['message'],
       '',
     );
 
-    final senderRole = asString(
+    final senderRole =
+        asString(
       message['sender_role'],
     ).toUpperCase();
 
     final isTrainer =
         senderRole == 'TRAINER';
 
-    final time = _formatMessageTime(
+    final time =
+        _formatMessageTime(
       message['created_at'],
     );
 
@@ -1027,10 +1307,12 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
           ? Alignment.centerRight
           : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.symmetric(
+        margin:
+            const EdgeInsets.symmetric(
           vertical: 4,
         ),
-        padding: const EdgeInsets.symmetric(
+        padding:
+            const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 10,
         ),
@@ -1038,46 +1320,66 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
             const BoxConstraints(
           maxWidth: 420,
         ),
-        decoration: BoxDecoration(
+        decoration:
+            BoxDecoration(
           color: isTrainer
               ? scheme.primary
-              : scheme.surfaceContainerHighest,
+              : scheme
+                  .surfaceContainerHighest,
           borderRadius:
               BorderRadius.only(
             topLeft:
-                const Radius.circular(14),
-            topRight:
-                const Radius.circular(14),
-            bottomLeft: Radius.circular(
-              isTrainer ? 14 : 3,
+                const Radius.circular(
+              14,
             ),
-            bottomRight: Radius.circular(
-              isTrainer ? 3 : 14,
+            topRight:
+                const Radius.circular(
+              14,
+            ),
+            bottomLeft:
+                Radius.circular(
+              isTrainer
+                  ? 14
+                  : 3,
+            ),
+            bottomRight:
+                Radius.circular(
+              isTrainer
+                  ? 3
+                  : 14,
             ),
           ),
         ),
         child: Column(
-          crossAxisAlignment: isTrainer
-              ? CrossAxisAlignment.end
-              : CrossAxisAlignment.start,
+          crossAxisAlignment:
+              isTrainer
+                  ? CrossAxisAlignment
+                      .end
+                  : CrossAxisAlignment
+                      .start,
           children: [
             Text(
               text,
               style: TextStyle(
                 color: isTrainer
                     ? Colors.white
-                    : scheme.onSurface,
+                    : scheme
+                        .onSurface,
                 fontSize: 14,
                 height: 1.35,
               ),
             ),
             if (time.isNotEmpty) ...[
-              const SizedBox(height: 5),
+              const SizedBox(
+                height: 5,
+              ),
               Text(
                 time,
-                style: TextStyle(
+                style:
+                    TextStyle(
                   color: isTrainer
-                      ? Colors.white70
+                      ? Colors
+                          .white70
                       : theme
                           .textTheme
                           .bodySmall
@@ -1102,7 +1404,8 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding:
+            const EdgeInsets.all(12),
         child: Row(
           crossAxisAlignment:
               CrossAxisAlignment.end,
@@ -1114,11 +1417,12 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
                 minLines: 1,
                 maxLines: 4,
                 textInputAction:
-                    TextInputAction.newline,
+                    TextInputAction
+                        .newline,
                 decoration:
                     const InputDecoration(
                   hintText:
-                      'Type your message to trainee...',
+                      'Type your message to member...',
                   border:
                       OutlineInputBorder(),
                   contentPadding:
@@ -1127,17 +1431,18 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
                     vertical: 12,
                   ),
                 ),
-                onSubmitted: (_) {
-                  _sendMessage();
-                },
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(
+              width: 8,
+            ),
             SizedBox(
               height: 48,
               width: 48,
-              child: IconButton.filled(
-                tooltip: 'Send',
+              child:
+                  IconButton.filled(
+                tooltip:
+                    'Send',
                 onPressed:
                     _sending
                         ? null
@@ -1148,8 +1453,10 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
                         height: 18,
                         child:
                             CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+                          strokeWidth:
+                              2,
+                          color:
+                              Colors.white,
                         ),
                       )
                     : const Icon(
@@ -1167,55 +1474,38 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
   // TIME FORMATTER
   // ============================================================
 
-  String _formatMessageTime(
-    dynamic value,
-  ) {
-    if (value == null) {
-      return '';
-    }
+  String _formatMessageTime(dynamic value) {
+  if (value == null) {
+    return '';
+  }
 
-    final raw = value.toString().trim();
+  final raw = value.toString().trim();
 
-    if (raw.isEmpty) {
-      return '';
-    }
+  if (raw.isEmpty) {
+    return '';
+  }
 
+  try {
+    // Parse the backend timestamp.
+    //
     // Example:
-    // 2026-09-09T10:30:15.000Z
-    if (raw.contains('T')) {
-      final parts =
-          raw.split('T');
+    // 2026-09-15T08:23:00.000Z
+    //
+    // The "Z" means UTC.
+    final dateTime = DateTime.parse(raw);
 
-      if (parts.length > 1) {
-        var time =
-            parts[1];
+    // Convert UTC time to the device's local timezone.
+    final localTime = dateTime.toLocal();
 
-        if (time.contains('.')) {
-          time =
-              time.split('.').first;
-        }
+    // Return HH:mm
+    final hour = localTime.hour.toString().padLeft(2, '0');
+    final minute = localTime.minute.toString().padLeft(2, '0');
 
-        if (time.endsWith('Z')) {
-          time =
-              time.substring(
-            0,
-            time.length - 1,
-          );
-        }
-
-        if (time.length >= 5) {
-          return time.substring(0, 5);
-        }
-
-        return time;
-      }
-    }
-
-    // Example:
-    // 10:30:15
+    return '$hour:$minute';
+  } catch (_) {
+    // Fallback for values that are already plain time strings.
     if (raw.contains(':')) {
-      final parts =
-          raw.split(':');
+      final parts = raw.split(':');
 
       if (parts.length >= 2) {
         return '${parts[0]}:${parts[1]}';
@@ -1224,4 +1514,5 @@ class _TrainerChatPageState extends State<TrainerChatPage> {
 
     return raw;
   }
+}
 }
