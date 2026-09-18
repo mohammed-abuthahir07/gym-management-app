@@ -1,21 +1,27 @@
 const pool = require('../../config/db');
 
-
-// ========================================
+// ======================================================
 // CREATE CONTENT
-// ========================================
+// ======================================================
 
 const createContent = async (contentData) => {
+
     const {
         title,
         image,
         description
     } = contentData;
 
-    const [result] = await pool.query(
-        `INSERT INTO content
-        (title, image, description)
-        VALUES (?, ?, ?)`,
+    const [result] = await pool.execute(
+        `
+        INSERT INTO content
+        (
+            title,
+            image,
+            description
+        )
+        VALUES (?, ?, ?)
+        `,
         [
             title,
             image,
@@ -26,13 +32,14 @@ const createContent = async (contentData) => {
     return result;
 };
 
-
-// ========================================
+// ======================================================
 // GET ALL CONTENT
-// ========================================
+// ======================================================
 
 const getAllContent = async () => {
-    const [rows] = await pool.query(`
+
+    const [rows] = await pool.execute(
+        `
         SELECT
             id,
             title,
@@ -42,52 +49,63 @@ const getAllContent = async () => {
             updated_at
         FROM content
         ORDER BY created_at DESC
-    `);
+        `
+    );
 
     return rows;
 };
 
-
-// ========================================
+// ======================================================
 // GET CONTENT BY ID
-// ========================================
+// ======================================================
 
 const getContentById = async (id) => {
-    const [rows] = await pool.query(
-        `SELECT
+
+    const [rows] = await pool.execute(
+        `
+        SELECT
             id,
             title,
             image,
             description,
             created_at,
             updated_at
-         FROM content
-         WHERE id = ?`,
+        FROM content
+        WHERE id = ?
+        LIMIT 1
+        `,
         [id]
     );
 
-    return rows[0];
+    return rows.length > 0
+        ? rows[0]
+        : null;
 };
 
-
-// ========================================
+// ======================================================
 // UPDATE CONTENT
-// ========================================
+// ======================================================
 
-const updateContent = async (id, contentData) => {
+const updateContent = async (
+    id,
+    contentData
+) => {
+
     const {
         title,
         image,
         description
     } = contentData;
 
-    const [result] = await pool.query(
-        `UPDATE content
-         SET
+    const [result] = await pool.execute(
+        `
+        UPDATE content
+        SET
             title = ?,
             image = ?,
             description = ?
-         WHERE id = ?`,
+        WHERE id = ?
+        `,
         [
             title,
             image,
@@ -99,21 +117,26 @@ const updateContent = async (id, contentData) => {
     return result;
 };
 
-
-// ========================================
+// ======================================================
 // DELETE CONTENT
-// ========================================
+// ======================================================
 
 const deleteContent = async (id) => {
-    const [result] = await pool.query(
-        `DELETE FROM content
-         WHERE id = ?`,
+
+    const [result] = await pool.execute(
+        `
+        DELETE FROM content
+        WHERE id = ?
+        `,
         [id]
     );
 
     return result;
 };
 
+// ======================================================
+// EXPORT
+// ======================================================
 
 module.exports = {
     createContent,
