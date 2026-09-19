@@ -14,7 +14,7 @@ class PublicFooter extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
       padding: EdgeInsets.symmetric(
         horizontal: isDesktop ? 64.0 : 24.0,
         vertical: 48.0,
@@ -85,7 +85,7 @@ class PublicFooter extends StatelessWidget {
           ),
 
           const SizedBox(height: 40),
-          Divider(color: colorScheme.outlineVariant.withOpacity(0.4)),
+          Divider(color: colorScheme.outlineVariant.withValues(alpha: 0.4)),
           const SizedBox(height: 20),
 
           // Bottom Copyright & Portal Link

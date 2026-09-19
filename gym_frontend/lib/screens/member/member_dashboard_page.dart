@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/api_service.dart';
+import '../../theme/peakforge_colors.dart';
 import '../../utils/json_helpers.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/common/app_widgets.dart';
@@ -15,6 +16,7 @@ class MemberDashboardPage extends StatefulWidget {
 
 class _MemberDashboardPageState extends State<MemberDashboardPage> {
   bool _loading = true;
+  bool _refreshing = false;
   String? _error;
 
   num _checkinDays = 0;
@@ -32,10 +34,17 @@ class _MemberDashboardPageState extends State<MemberDashboardPage> {
   }
 
   Future<void> _fetchDashboard() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    if (_loading == false) {
+      setState(() {
+        _refreshing = true;
+        _error = null;
+      });
+    } else {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
 
     final api = context.read<ApiService>();
 
@@ -72,7 +81,12 @@ class _MemberDashboardPageState extends State<MemberDashboardPage> {
     } catch (_) {
       setState(() => _error = 'Unable to load member dashboard metrics.');
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _refreshing = false;
+        });
+      }
     }
   }
 
@@ -99,29 +113,32 @@ class _MemberDashboardPageState extends State<MemberDashboardPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Member Dashboard', style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 4),
-                          const Text('Your current training and nutrition overview.'),
-                        ],
-                      ),
-                      IconButton(
-                        tooltip: 'Refresh',
-                        onPressed: _fetchDashboard,
-                        icon: const Icon(Icons.refresh),
-                      ),
-                    ],
+                  FadeSlideIn(
+                    child: PageHeader(
+                      title: 'Member Dashboard',
+                      subtitle: 'Your current training and nutrition overview.',
+                      icon: Icons.favorite_outline,
+                      actions: [
+                        IconButton(
+                          tooltip: 'Refresh',
+                          onPressed: _refreshing ? null : _fetchDashboard,
+                          icon: _refreshing
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.refresh),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
 
                   // Stat Cards Grid
                   LayoutBuilder(
                     builder: (context, constraints) {
+                      final pf = context.pf;
                       final cols = Responsive.gridCount(context, mobile: 2, tablet: 2, desktop: 4);
                       return GridView.count(
                         crossAxisCount: cols,
@@ -130,27 +147,31 @@ class _MemberDashboardPageState extends State<MemberDashboardPage> {
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 16,
                         // Fixed: Lowered aspect ratio on mobile to give cards more height and prevent text overflow
-                        childAspectRatio: Responsive.isMobile(context) ? 1.2 : 1.6,
+                        childAspectRatio: Responsive.isMobile(context) ? 1.12 : 1.45,
                         children: [
                           StatCard(
                             title: 'Check-In Days',
                             value: '$_checkinDays Days',
                             icon: Icons.calendar_month,
+                            accent: pf.statAccent(0),
                           ),
                           StatCard(
                             title: 'Workout Plans',
                             value: '$_workoutPlansCount Assigned',
                             icon: Icons.fitness_center,
+                            accent: pf.statAccent(2),
                           ),
                           StatCard(
                             title: 'Month Cheat Count',
                             value: '$_cheatCount Meals',
                             icon: Icons.fastfood,
+                            accent: pf.statAccent(4),
                           ),
                           StatCard(
                             title: 'Unread Alerts',
                             value: '$_unreadNotifications',
                             icon: Icons.notifications,
+                            accent: pf.statAccent(5),
                           ),
                         ],
                       );

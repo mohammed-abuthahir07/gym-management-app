@@ -45,7 +45,6 @@ class PeakForgeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = context.watch<ThemeController>();
-    final auth = context.watch<AuthController>();
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -58,30 +57,35 @@ class PeakForgeApp extends StatelessWidget {
         '/': (context) => const PublicShell(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        '/member': (context) => _guardRoute(
-              auth: auth,
+        '/member': (context) => const _RoleGate(
               expectedRole: 'MEMBER',
-              child: const MemberShell(),
+              child: MemberShell(),
             ),
-        '/trainer': (context) => _guardRoute(
-              auth: auth,
+        '/trainer': (context) => const _RoleGate(
               expectedRole: 'TRAINER',
-              child: const TrainerShell(),
+              child: TrainerShell(),
             ),
-        '/admin': (context) => _guardRoute(
-              auth: auth,
+        '/admin': (context) => const _RoleGate(
               expectedRole: 'ADMIN',
-              child: const AdminShell(),
+              child: AdminShell(),
             ),
       },
     );
   }
+}
 
-  Widget _guardRoute({
-    required AuthController auth,
-    required String expectedRole,
-    required Widget child,
-  }) {
+class _RoleGate extends StatelessWidget {
+  const _RoleGate({
+    required this.expectedRole,
+    required this.child,
+  });
+
+  final String expectedRole;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthController>();
     if (!auth.isLoggedIn || auth.role != expectedRole) {
       return const LoginScreen();
     }

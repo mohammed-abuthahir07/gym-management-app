@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../widgets/common/app_shell.dart';
+import '../../widgets/common/keep_alive_host.dart';
 import 'admin_challenges_page.dart';
 import 'admin_contacts_page.dart';
 import 'admin_content_page.dart';
@@ -27,22 +28,6 @@ class _AdminShellState extends State<AdminShell> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = const [
-      AdminDashboardPage(),
-      AdminMembersPage(),
-      AdminTrainersPage(),
-      AdminPlansPage(),
-      AdminFeesPage(),
-      AdminPromotionsPage(),
-      AdminChallengesPage(),
-      AdminExercisesPage(),
-      AdminContentPage(),
-      AdminContactsPage(),
-      AdminReportsPage(),
-      AdminNotificationsPage(),
-      AdminProfilePage(),
-    ];
-
     return AppShell(
       title: 'PeakForge Admin',
       showLogout: true,
@@ -63,7 +48,24 @@ class _AdminShellState extends State<AdminShell> {
       ],
       index: _index,
       onSelect: (value) => setState(() => _index = value),
-      body: pages[_index],
+      body: KeepAliveHost(
+        index: _index,
+        builders: [
+          (_) => const AdminDashboardPage(),
+          (_) => const AdminMembersPage(),
+          (_) => const AdminTrainersPage(),
+          (_) => const AdminPlansPage(),
+          (_) => const AdminFeesPage(),
+          (_) => const AdminPromotionsPage(),
+          (_) => const AdminChallengesPage(),
+          (_) => const AdminExercisesPage(),
+          (_) => const AdminContentPage(),
+          (_) => const AdminContactsPage(),
+          (_) => const AdminReportsPage(),
+          (_) => const AdminNotificationsPage(),
+          (_) => const AdminProfilePage(),
+        ],
+      ),
     );
   }
 }

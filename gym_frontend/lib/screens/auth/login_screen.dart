@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../controllers/auth/auth_controller.dart';
 import '../../services/api_service.dart';
+import '../../theme/peakforge_colors.dart';
 import '../../utils/validators.dart';
 import '../../widgets/common/app_widgets.dart';
 
@@ -19,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _password = TextEditingController();
   String _role = 'MEMBER';
   bool _loading = false;
+  bool _obscure = true;
 
   @override
   void dispose() {
@@ -54,55 +56,116 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final pf = context.pf;
+    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 460),
-          child: Card(
-            margin: const EdgeInsets.all(20),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Welcome back', style: Theme.of(context).textTheme.headlineSmall),
-                    const SizedBox(height: 8),
-                    const Text('Sign in with your PeakForge account'),
-                    const SizedBox(height: 20),
-                    DropdownButtonFormField<String>(
-                      initialValue: _role,
-                      items: const [
-                        DropdownMenuItem(value: 'MEMBER', child: Text('Member')),
-                        DropdownMenuItem(value: 'TRAINER', child: Text('Trainer')),
-                        DropdownMenuItem(value: 'ADMIN', child: Text('Admin')),
-                      ],
-                      onChanged: (value) => setState(() => _role = value ?? 'MEMBER'),
-                      decoration: const InputDecoration(labelText: 'Role'),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: pf.heroGradient,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 460),
+                child: FadeSlideIn(
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(colors: pf.heroGradient),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Icon(Icons.fitness_center, color: Colors.white),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Welcome back',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Sign in with your PeakForge account',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: pf.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 22),
+                            DropdownButtonFormField<String>(
+                              initialValue: _role,
+                              items: const [
+                                DropdownMenuItem(value: 'MEMBER', child: Text('Member')),
+                                DropdownMenuItem(value: 'TRAINER', child: Text('Trainer')),
+                                DropdownMenuItem(value: 'ADMIN', child: Text('Admin')),
+                              ],
+                              onChanged: (value) => setState(() => _role = value ?? 'MEMBER'),
+                              decoration: const InputDecoration(
+                                labelText: 'Role',
+                                prefixIcon: Icon(Icons.badge_outlined),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _email,
+                              keyboardType: TextInputType.emailAddress,
+                              decoration: const InputDecoration(
+                                labelText: 'Email',
+                                prefixIcon: Icon(Icons.mail_outline),
+                              ),
+                              validator: Validators.email,
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _password,
+                              obscureText: _obscure,
+                              decoration: InputDecoration(
+                                labelText: 'Password',
+                                prefixIcon: const Icon(Icons.lock_outline),
+                                suffixIcon: IconButton(
+                                  onPressed: () => setState(() => _obscure = !_obscure),
+                                  icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                                ),
+                              ),
+                              validator: Validators.password,
+                            ),
+                            const SizedBox(height: 22),
+                            AppButton(
+                              label: 'Login',
+                              loading: _loading,
+                              onPressed: _submit,
+                              expanded: true,
+                              icon: Icons.login,
+                            ),
+                            const SizedBox(height: 8),
+                            TextButton(
+                              onPressed: () => Navigator.pushNamed(context, '/register'),
+                              child: const Text('New member? Create an account'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false),
+                              child: const Text('Back to PeakForge home'),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _email,
-                      decoration: const InputDecoration(labelText: 'Email'),
-                      validator: Validators.email,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _password,
-                      obscureText: true,
-                      decoration: const InputDecoration(labelText: 'Password'),
-                      validator: Validators.password,
-                    ),
-                    const SizedBox(height: 20),
-                    AppButton(label: 'Login', loading: _loading, onPressed: _submit, expanded: true),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: () => Navigator.pushNamed(context, '/register'),
-                      child: const Text('New member? Create an account'),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),

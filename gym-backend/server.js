@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const pool = require('./config/db');
+const ensureIndexes = require('./config/ensureIndexes');
 const memberAuthRoutes = require('./member/routes/memberAuthRoutes');
 const adminAuthRoutes = require('./admin/routes/adminAuthRoutes');
 const adminTrainerRoutes = require('./admin/routes/adminTrainerRoutes');
@@ -115,6 +116,7 @@ const startServer = async () => {
         const connection = await pool.getConnection();
         console.log('MySQL connected successfully');
         connection.release();
+        await ensureIndexes();
         app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
         });

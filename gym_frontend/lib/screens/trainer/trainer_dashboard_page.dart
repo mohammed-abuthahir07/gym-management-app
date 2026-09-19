@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/api_service.dart';
+import '../../theme/peakforge_colors.dart';
 import '../../utils/json_helpers.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/common/app_widgets.dart';
@@ -17,6 +18,7 @@ class TrainerDashboardPage extends StatefulWidget {
 class _TrainerDashboardPageState
     extends State<TrainerDashboardPage> {
   bool _loading = true;
+  bool _refreshing = false;
   String? _error;
 
   num _assignedMembers = 0;
@@ -44,7 +46,11 @@ class _TrainerDashboardPageState
     if (!mounted) return;
 
     setState(() {
-      _loading = true;
+      if (_loading == false) {
+        _refreshing = true;
+      } else {
+        _loading = true;
+      }
       _error = null;
     });
 
@@ -109,6 +115,7 @@ class _TrainerDashboardPageState
 
       setState(() {
         _loading = false;
+        _refreshing = false;
       });
     }
   }
@@ -119,7 +126,6 @@ class _TrainerDashboardPageState
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final padding = Responsive.pagePadding(context);
 
     return AsyncStateView(
@@ -147,6 +153,7 @@ class _TrainerDashboardPageState
 
                   _DashboardHeader(
                     onRefresh: _fetchDashboard,
+                    refreshing: _refreshing,
                   ),
 
                   const SizedBox(height: 20),
@@ -186,6 +193,7 @@ class _TrainerDashboardPageState
                               title: 'Assigned Trainees',
                               value: '$_assignedMembers Members',
                               icon: Icons.groups_outlined,
+                              accent: context.pf.statAccent(0),
                             );
                           }
 
@@ -194,6 +202,7 @@ class _TrainerDashboardPageState
                               title: 'Active Workout Blueprints',
                               value: '$_workoutPlans Plans',
                               icon: Icons.fitness_center_outlined,
+                              accent: context.pf.statAccent(2),
                             );
                           }
 
@@ -201,6 +210,7 @@ class _TrainerDashboardPageState
                             title: 'Target Nutrition Diets',
                             value: '$_dietPlans Meals',
                             icon: Icons.restaurant_outlined,
+                            accent: context.pf.statAccent(1),
                           );
                         },
                       );
@@ -235,77 +245,29 @@ class _TrainerDashboardPageState
 class _DashboardHeader extends StatelessWidget {
   const _DashboardHeader({
     required this.onRefresh,
+    this.refreshing = false,
   });
 
   final Future<void> Function() onRefresh;
+  final bool refreshing;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isMobile = Responsive.isMobile(context);
-
-    if (isMobile) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Trainer Dashboard',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            'Roster overview, active plans, and member consistency.',
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 6),
-          Align(
-            alignment: Alignment.centerRight,
-            child: IconButton(
-              tooltip: 'Refresh',
-              onPressed: onRefresh,
-              icon: const Icon(Icons.refresh),
-            ),
-          ),
-        ],
-      );
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Trainer Dashboard',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                'Roster overview, active plans, and member consistency.',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
+    return PageHeader(
+      title: 'Trainer Dashboard',
+      subtitle: 'Roster overview, active plans, and member consistency.',
+      icon: Icons.sports_outlined,
+      actions: [
         IconButton(
           tooltip: 'Refresh',
-          onPressed: onRefresh,
-          icon: const Icon(Icons.refresh),
+          onPressed: refreshing ? null : onRefresh,
+          icon: refreshing
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.refresh),
         ),
       ],
     );
@@ -321,26 +283,26 @@ class _CompactStatCard extends StatelessWidget {
     required this.title,
     required this.value,
     required this.icon,
+    this.accent,
   });
 
   final String title;
   final String value;
   final IconData icon;
+  final Color? accent;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final color = accent ?? scheme.primary;
 
     return Card(
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(
-          color: scheme.outlineVariant.withValues(alpha: 0.40),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(left: BorderSide(color: color, width: 4)),
         ),
-      ),
-      child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,13 +313,13 @@ class _CompactStatCard extends StatelessWidget {
               width: 34,
               height: 34,
               decoration: BoxDecoration(
-                color: scheme.primary.withValues(alpha: 0.10),
+                color: color.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(9),
               ),
               child: Icon(
                 icon,
                 size: 20,
-                color: scheme.primary,
+                color: color,
               ),
             ),
             const SizedBox(height: 9),

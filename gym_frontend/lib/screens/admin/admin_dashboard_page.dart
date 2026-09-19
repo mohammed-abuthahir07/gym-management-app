@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/api_service.dart';
+import '../../theme/peakforge_colors.dart';
 import '../../utils/json_helpers.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/common/app_widgets.dart';
@@ -15,6 +16,7 @@ class AdminDashboardPage extends StatefulWidget {
 
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
   bool _loading = true;
+  bool _refreshing = false;
   String? _error;
 
   num _memberCount = 0;
@@ -36,10 +38,18 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 
   Future<void> _fetchDashboard() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    final isFirstLoad = _memberCount == 0 && _recentPlans.isEmpty && _loading;
+    if (isFirstLoad) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    } else {
+      setState(() {
+        _refreshing = true;
+        _error = null;
+      });
+    }
 
     final api = context.read<ApiService>();
     try {
@@ -87,7 +97,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     } catch (_) {
       setState(() => _error = 'Failed to load admin dashboard.');
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _refreshing = false;
+        });
+      }
     }
   }
 
@@ -95,6 +110,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final pf = context.pf;
     final padding = Responsive.pagePadding(context);
 
     return AsyncStateView(
@@ -110,32 +126,29 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           padding: EdgeInsets.all(padding),
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1100),
+              constraints: const BoxConstraints(maxWidth: 1180),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Admin Dashboard',
-                              style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text('Real-time overview of members, coaches, revenue, and active programs.'),
-                          ],
+                  FadeSlideIn(
+                    child: PageHeader(
+                      title: 'Admin Dashboard',
+                      subtitle: 'Real-time overview of members, coaches, revenue, and active programs.',
+                      icon: Icons.dashboard_outlined,
+                      actions: [
+                        IconButton(
+                          tooltip: 'Refresh Metrics',
+                          onPressed: _refreshing ? null : _fetchDashboard,
+                          icon: _refreshing
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.refresh),
                         ),
-                      ),
-                      IconButton(
-                        tooltip: 'Refresh Metrics',
-                        onPressed: _fetchDashboard,
-                        icon: const Icon(Icons.refresh),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
 
@@ -143,21 +156,25 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final cols = Responsive.gridCount(context, mobile: 2, tablet: 3, desktop: 4);
+                      final cards = [
+                        StatCard(title: 'Active Members', value: '$_memberCount', icon: Icons.people_alt_outlined, accent: pf.statAccent(0)),
+                        StatCard(title: 'Coaching Staff', value: '$_trainerCount', icon: Icons.sports_outlined, accent: pf.statAccent(1)),
+                        StatCard(title: 'Tier Plans', value: '$_planCount', icon: Icons.card_membership_outlined, accent: pf.statAccent(2)),
+                        StatCard(title: 'Campaign Offers', value: '$_promotionCount', icon: Icons.local_offer_outlined, accent: pf.statAccent(3)),
+                        StatCard(title: 'Challenges', value: '$_challengeCount', icon: Icons.military_tech_outlined, accent: pf.statAccent(4)),
+                        StatCard(title: 'Month Revenue', value: '₹${_monthRevenue.toStringAsFixed(0)}', icon: Icons.account_balance_wallet_outlined, accent: pf.statAccent(5)),
+                        StatCard(title: 'All-Time Revenue', value: '₹${_totalRevenue.toStringAsFixed(0)}', icon: Icons.savings_outlined, accent: pf.statAccent(1)),
+                      ];
                       return GridView.count(
                         crossAxisCount: cols,
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 16,
-                        childAspectRatio: Responsive.isMobile(context) ? 1.25 : 1.4,
+                        childAspectRatio: Responsive.isMobile(context) ? 1.18 : 1.35,
                         children: [
-                          StatCard(title: 'Active Members', value: '$_memberCount', icon: Icons.people_alt_outlined),
-                          StatCard(title: 'Coaching Staff', value: '$_trainerCount', icon: Icons.sports_outlined),
-                          StatCard(title: 'Tier Plans', value: '$_planCount', icon: Icons.card_membership_outlined),
-                          StatCard(title: 'Campaign Offers', value: '$_promotionCount', icon: Icons.local_offer_outlined),
-                          StatCard(title: 'Challenges', value: '$_challengeCount', icon: Icons.military_tech_outlined),
-                          StatCard(title: 'Month Revenue', value: '₹${_monthRevenue.toStringAsFixed(0)}', icon: Icons.account_balance_wallet_outlined),
-                          StatCard(title: 'All-Time Revenue', value: '₹${_totalRevenue.toStringAsFixed(0)}', icon: Icons.savings_outlined),
+                          for (var i = 0; i < cards.length; i++)
+                            FadeSlideIn(delay: Duration(milliseconds: 40 * i), child: cards[i]),
                         ],
                       );
                     },

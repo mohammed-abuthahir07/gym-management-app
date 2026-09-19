@@ -8,32 +8,29 @@ const pool = require('../../config/db');
 
 const getMemberAnalytics = async () => {
 
-    // Total members
-    const [totalRows] = await pool.query(`
-        SELECT COUNT(*) AS total_members
-        FROM users
-        WHERE role = 'MEMBER'
-    `);
-
-
-    // Members joined in current month
-    const [currentMonthRows] = await pool.query(`
-        SELECT
-            id,
-            name,
-            email,
-            phone,
-            created_at AS joined_date
-        FROM users
-        WHERE role = 'MEMBER'
-          AND created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
-          AND created_at < DATE_ADD(
-              DATE_FORMAT(CURDATE(), '%Y-%m-01'),
-              INTERVAL 1 MONTH
-          )
-        ORDER BY created_at DESC
-    `);
-
+    const [[totalRows], [currentMonthRows]] = await Promise.all([
+        pool.query(`
+            SELECT COUNT(*) AS total_members
+            FROM users
+            WHERE role = 'MEMBER'
+        `),
+        pool.query(`
+            SELECT
+                id,
+                name,
+                email,
+                phone,
+                created_at AS joined_date
+            FROM users
+            WHERE role = 'MEMBER'
+              AND created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+              AND created_at < DATE_ADD(
+                  DATE_FORMAT(CURDATE(), '%Y-%m-01'),
+                  INTERVAL 1 MONTH
+              )
+            ORDER BY created_at DESC
+        `),
+    ]);
 
     return {
         total_members: totalRows[0].total_members,
@@ -50,32 +47,29 @@ const getMemberAnalytics = async () => {
 
 const getTrainerAnalytics = async () => {
 
-    // Total trainers
-    const [totalRows] = await pool.query(`
-        SELECT COUNT(*) AS total_trainers
-        FROM users
-        WHERE role = 'TRAINER'
-    `);
-
-
-    // Trainers joined in current month
-    const [currentMonthRows] = await pool.query(`
-        SELECT
-            id,
-            name,
-            email,
-            phone,
-            created_at AS joined_date
-        FROM users
-        WHERE role = 'TRAINER'
-          AND created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
-          AND created_at < DATE_ADD(
-              DATE_FORMAT(CURDATE(), '%Y-%m-01'),
-              INTERVAL 1 MONTH
-          )
-        ORDER BY created_at DESC
-    `);
-
+    const [[totalRows], [currentMonthRows]] = await Promise.all([
+        pool.query(`
+            SELECT COUNT(*) AS total_trainers
+            FROM users
+            WHERE role = 'TRAINER'
+        `),
+        pool.query(`
+            SELECT
+                id,
+                name,
+                email,
+                phone,
+                created_at AS joined_date
+            FROM users
+            WHERE role = 'TRAINER'
+              AND created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+              AND created_at < DATE_ADD(
+                  DATE_FORMAT(CURDATE(), '%Y-%m-01'),
+                  INTERVAL 1 MONTH
+              )
+            ORDER BY created_at DESC
+        `),
+    ]);
 
     return {
         total_trainers: totalRows[0].total_trainers,

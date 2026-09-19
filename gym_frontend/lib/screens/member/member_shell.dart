@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../widgets/common/app_shell.dart';
+import '../../widgets/common/keep_alive_host.dart';
 import 'member_analytics_page.dart';
 import 'member_challenges_page.dart';
 import 'member_cheat_days_page.dart';
@@ -26,21 +27,6 @@ class _MemberShellState extends State<MemberShell> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = const [
-      MemberDashboardPage(),
-      MemberWorkoutPage(),
-      MemberExercisesPage(),
-      MemberDietPage(),
-      MemberCheatDaysPage(),
-      MemberProgressPage(),
-      MemberChallengesPage(),
-      MemberNotificationsPage(),
-      MemberChatPage(),
-      MemberAnalyticsPage(),
-      MemberFeesPage(),
-      MemberProfilePage(),
-    ];
-
     return AppShell(
       title: 'PeakForge Member',
       showLogout: true,
@@ -60,7 +46,23 @@ class _MemberShellState extends State<MemberShell> {
       ],
       index: _index,
       onSelect: (value) => setState(() => _index = value),
-      body: pages[_index],
+      body: KeepAliveHost(
+        index: _index,
+        builders: [
+          (_) => const MemberDashboardPage(),
+          (_) => const MemberWorkoutPage(),
+          (_) => const MemberExercisesPage(),
+          (_) => const MemberDietPage(),
+          (_) => const MemberCheatDaysPage(),
+          (_) => const MemberProgressPage(),
+          (_) => const MemberChallengesPage(),
+          (_) => const MemberNotificationsPage(),
+          (_) => const MemberChatPage(),
+          (_) => const MemberAnalyticsPage(),
+          (_) => const MemberFeesPage(),
+          (_) => const MemberProfilePage(),
+        ],
+      ),
     );
   }
 }

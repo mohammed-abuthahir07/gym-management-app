@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../widgets/common/app_shell.dart';
+import '../../widgets/common/keep_alive_host.dart';
 import 'trainer_analytics_page.dart';
 import 'trainer_chat_page.dart';
 import 'trainer_cheat_days_page.dart';
@@ -23,18 +24,6 @@ class _TrainerShellState extends State<TrainerShell> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = const [
-      TrainerDashboardPage(),
-      TrainerMembersPage(),
-      TrainerWorkoutPlansPage(),
-      TrainerDietPlansPage(),
-      TrainerClassesPage(),
-      TrainerCheatDaysPage(),
-      TrainerAnalyticsPage(),
-      TrainerChatPage(),
-      TrainerProfilePage(),
-    ];
-
     return AppShell(
       title: 'PeakForge Trainer',
       showLogout: true,
@@ -51,7 +40,20 @@ class _TrainerShellState extends State<TrainerShell> {
       ],
       index: _index,
       onSelect: (value) => setState(() => _index = value),
-      body: pages[_index],
+      body: KeepAliveHost(
+        index: _index,
+        builders: [
+          (_) => const TrainerDashboardPage(),
+          (_) => const TrainerMembersPage(),
+          (_) => const TrainerWorkoutPlansPage(),
+          (_) => const TrainerDietPlansPage(),
+          (_) => const TrainerClassesPage(),
+          (_) => const TrainerCheatDaysPage(),
+          (_) => const TrainerAnalyticsPage(),
+          (_) => const TrainerChatPage(),
+          (_) => const TrainerProfilePage(),
+        ],
+      ),
     );
   }
 }

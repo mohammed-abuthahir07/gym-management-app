@@ -98,7 +98,8 @@ const getCurrentYearCheckIns = async () => {
 
         LEFT JOIN workout_completions wc
             ON wc.member_id = member.id
-            AND YEAR(wc.completed_date) = YEAR(CURDATE())
+            AND wc.completed_date >= DATE_FORMAT(CURDATE(), '%Y-01-01')
+            AND wc.completed_date < DATE_ADD(DATE_FORMAT(CURDATE(), '%Y-01-01'), INTERVAL 1 YEAR)
 
         WHERE member.role = 'MEMBER'
           AND member.status = 'ACTIVE'

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -16,10 +17,23 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
+class _CacheEntry {
+  _CacheEntry(this.data, this.expiresAt);
+  final dynamic data;
+  final DateTime expiresAt;
+  bool get isFresh => DateTime.now().isBefore(expiresAt);
+}
+
 class ApiService {
   ApiService(this._storage);
 
   final StorageService _storage;
+  final http.Client _client = http.Client();
+  final Map<String, _CacheEntry> _getCache = {};
+  final Map<String, Future<dynamic>> _inFlightGets = {};
+
+  static const _timeout = Duration(seconds: 20);
+  static const _publicTtl = Duration(seconds: 45);
 
   Future<Map<String, String>> _headers({bool auth = true, bool json = true}) async {
     final headers = <String, String>{
@@ -37,9 +51,58 @@ class ApiService {
 
   Uri _uri(String path) => Uri.parse('${ApiConfig.baseUrl}$path');
 
+  bool _isPublicCacheable(String path) {
+    return path == '/api/plans' ||
+        path == '/api/promotions' ||
+        path == '/api/content' ||
+        path == '/api/trainers';
+  }
+
+  dynamic _cachedGet(String path) {
+    final hit = _getCache[path];
+    if (hit != null && hit.isFresh) return hit.data;
+    if (hit != null) _getCache.remove(path);
+    return null;
+  }
+
+  void _storeGet(String path, dynamic data) {
+    _getCache[path] = _CacheEntry(data, DateTime.now().add(_publicTtl));
+  }
+
+  void invalidateCache() {
+    _getCache.clear();
+  }
+
   Future<dynamic> get(String path, {bool auth = true}) async {
-    final response = await http.get(_uri(path), headers: await _headers(auth: auth));
-    return _decode(response);
+    if (_isPublicCacheable(path)) {
+      final cached = _cachedGet(path);
+      if (cached != null) return cached;
+    }
+
+    final existing = _inFlightGets[path];
+    if (existing != null) return existing;
+
+    final future = () async {
+      try {
+        final response = await _client
+            .get(_uri(path), headers: await _headers(auth: auth))
+            .timeout(_timeout);
+        final data = _decode(response);
+        if (_isPublicCacheable(path)) {
+          _storeGet(path, data);
+        }
+        return data;
+      } on TimeoutException {
+        throw ApiException(408, 'The request timed out. Please try again.');
+      } on SocketException {
+        throw ApiException(503, 'Unable to reach the server. Check your connection.');
+      } finally {
+        _inFlightGets.remove(path);
+      }
+    }();
+
+    _inFlightGets[path] = future;
+    return future;
   }
 
   Future<dynamic> post(
@@ -47,12 +110,21 @@ class ApiService {
     Map<String, dynamic>? body,
     bool auth = true,
   }) async {
-    final response = await http.post(
-      _uri(path),
-      headers: await _headers(auth: auth),
-      body: jsonEncode(body ?? {}),
-    );
-    return _decode(response);
+    try {
+      final response = await _client
+          .post(
+            _uri(path),
+            headers: await _headers(auth: auth),
+            body: jsonEncode(body ?? {}),
+          )
+          .timeout(_timeout);
+      invalidateCache();
+      return _decode(response);
+    } on TimeoutException {
+      throw ApiException(408, 'The request timed out. Please try again.');
+    } on SocketException {
+      throw ApiException(503, 'Unable to reach the server. Check your connection.');
+    }
   }
 
   Future<dynamic> put(
@@ -60,17 +132,35 @@ class ApiService {
     Map<String, dynamic>? body,
     bool auth = true,
   }) async {
-    final response = await http.put(
-      _uri(path),
-      headers: await _headers(auth: auth),
-      body: jsonEncode(body ?? {}),
-    );
-    return _decode(response);
+    try {
+      final response = await _client
+          .put(
+            _uri(path),
+            headers: await _headers(auth: auth),
+            body: jsonEncode(body ?? {}),
+          )
+          .timeout(_timeout);
+      invalidateCache();
+      return _decode(response);
+    } on TimeoutException {
+      throw ApiException(408, 'The request timed out. Please try again.');
+    } on SocketException {
+      throw ApiException(503, 'Unable to reach the server. Check your connection.');
+    }
   }
 
   Future<dynamic> delete(String path, {bool auth = true}) async {
-    final response = await http.delete(_uri(path), headers: await _headers(auth: auth));
-    return _decode(response);
+    try {
+      final response = await _client
+          .delete(_uri(path), headers: await _headers(auth: auth))
+          .timeout(_timeout);
+      invalidateCache();
+      return _decode(response);
+    } on TimeoutException {
+      throw ApiException(408, 'The request timed out. Please try again.');
+    } on SocketException {
+      throw ApiException(503, 'Unable to reach the server. Check your connection.');
+    }
   }
 
   Future<dynamic> postMultipart(
@@ -86,9 +176,16 @@ class ApiService {
     if (file != null) {
       request.files.add(await http.MultipartFile.fromPath(fileField, file.path));
     }
-    final streamed = await request.send();
-    final response = await http.Response.fromStream(streamed);
-    return _decode(response);
+    try {
+      final streamed = await _client.send(request).timeout(_timeout);
+      final response = await http.Response.fromStream(streamed);
+      invalidateCache();
+      return _decode(response);
+    } on TimeoutException {
+      throw ApiException(408, 'The request timed out. Please try again.');
+    } on SocketException {
+      throw ApiException(503, 'Unable to reach the server. Check your connection.');
+    }
   }
 
   Future<dynamic> putMultipart(
@@ -104,9 +201,16 @@ class ApiService {
     if (file != null) {
       request.files.add(await http.MultipartFile.fromPath(fileField, file.path));
     }
-    final streamed = await request.send();
-    final response = await http.Response.fromStream(streamed);
-    return _decode(response);
+    try {
+      final streamed = await _client.send(request).timeout(_timeout);
+      final response = await http.Response.fromStream(streamed);
+      invalidateCache();
+      return _decode(response);
+    } on TimeoutException {
+      throw ApiException(408, 'The request timed out. Please try again.');
+    } on SocketException {
+      throw ApiException(503, 'Unable to reach the server. Check your connection.');
+    }
   }
 
   dynamic _decode(http.Response response) {
@@ -133,6 +237,7 @@ class ApiService {
       401 => 'Please sign in again.',
       403 => 'You do not have access to this action.',
       404 => 'The requested item was not found.',
+      408 => 'The request timed out. Please try again.',
       409 => 'This action conflicts with existing data.',
       500 => 'Something went wrong. Please try again.',
       _ => 'Request failed. Please try again.',

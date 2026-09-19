@@ -2,7 +2,14 @@ const pool = require('../../config/db');
 
 const findTrainerByEmail = async (email) => {
     const [rows] = await pool.execute(
-        `SELECT *
+        `SELECT
+            id,
+            name,
+            email,
+            password,
+            role,
+            phone,
+            status
          FROM users
          WHERE email = ?
          AND role = 'TRAINER'

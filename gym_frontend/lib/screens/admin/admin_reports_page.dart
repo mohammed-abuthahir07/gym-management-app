@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/api_service.dart';
+import '../../theme/peakforge_colors.dart';
 import '../../utils/json_helpers.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/common/app_widgets.dart';
@@ -148,16 +149,19 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                             title: 'Current Month Revenue',
                             value: '₹${_monthRevenue.toStringAsFixed(0)}',
                             icon: Icons.calendar_view_month,
+                            accent: context.pf.statAccent(0),
                           ),
                           StatCard(
                             title: 'Current Year Revenue',
                             value: '₹${_yearRevenue.toStringAsFixed(0)}',
                             icon: Icons.calendar_today,
+                            accent: context.pf.statAccent(1),
                           ),
                           StatCard(
                             title: 'All-Time Revenue',
                             value: '₹${_totalRevenue.toStringAsFixed(0)}',
                             icon: Icons.account_balance,
+                            accent: context.pf.statAccent(2),
                           ),
                         ],
                       );
@@ -184,11 +188,13 @@ class _AdminReportsPageState extends State<AdminReportsPage> {
                             title: 'Month Attendance Check-Ins',
                             value: '$_monthCheckins Visits',
                             icon: Icons.how_to_reg,
+                            accent: context.pf.statAccent(3),
                           ),
                           StatCard(
                             title: 'Year Attendance Check-Ins',
                             value: '$_yearCheckins Visits',
                             icon: Icons.badge,
+                            accent: context.pf.info,
                           ),
                           Card(
                             child: Padding(

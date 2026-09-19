@@ -25,47 +25,59 @@ const getMemberWorkoutPlans = async (memberId) => {
         [memberId]
     );
 
-    for (const plan of plans) {
-        const [exercises] = await pool.execute(
-            `
-            SELECT
-                wpe.id,
-                wpe.workout_plan_id,
-                wpe.exercise_id,
-                e.name AS exercise_name,
-                e.muscle_group,
-                e.equipment,
-                e.instructions,
-                e.image_url,
-                e.video_url,
-                wpe.workout_day,
-                wpe.sets,
-                wpe.reps,
-                wpe.duration_minutes,
-                wpe.notes,
-                wpe.created_at,
-                wpe.updated_at
-            FROM workout_plan_exercises wpe
-            INNER JOIN exercises e
-                ON e.id = wpe.exercise_id
-            WHERE wpe.workout_plan_id = ?
-            ORDER BY
-                FIELD(
-                    wpe.workout_day,
-                    'MONDAY',
-                    'TUESDAY',
-                    'WEDNESDAY',
-                    'THURSDAY',
-                    'FRIDAY',
-                    'SATURDAY',
-                    'SUNDAY'
-                ),
-                wpe.id ASC
-            `,
-            [plan.id]
-        );
+    if (plans.length === 0) {
+        return plans;
+    }
 
-        plan.exercises = exercises;
+    const placeholders = plans.map(() => '?').join(',');
+    const [exercises] = await pool.query(
+        `
+        SELECT
+            wpe.id,
+            wpe.workout_plan_id,
+            wpe.exercise_id,
+            e.name AS exercise_name,
+            e.muscle_group,
+            e.equipment,
+            e.instructions,
+            e.image_url,
+            e.video_url,
+            wpe.workout_day,
+            wpe.sets,
+            wpe.reps,
+            wpe.duration_minutes,
+            wpe.notes,
+            wpe.created_at,
+            wpe.updated_at
+        FROM workout_plan_exercises wpe
+        INNER JOIN exercises e
+            ON e.id = wpe.exercise_id
+        WHERE wpe.workout_plan_id IN (${placeholders})
+        ORDER BY
+            FIELD(
+                wpe.workout_day,
+                'MONDAY',
+                'TUESDAY',
+                'WEDNESDAY',
+                'THURSDAY',
+                'FRIDAY',
+                'SATURDAY',
+                'SUNDAY'
+            ),
+            wpe.id ASC
+        `,
+        plans.map((plan) => plan.id)
+    );
+
+    const byPlan = new Map();
+    for (const exercise of exercises) {
+        const list = byPlan.get(exercise.workout_plan_id) || [];
+        list.push(exercise);
+        byPlan.set(exercise.workout_plan_id, list);
+    }
+
+    for (const plan of plans) {
+        plan.exercises = byPlan.get(plan.id) || [];
     }
 
     return plans;
